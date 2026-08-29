@@ -1,0 +1,392 @@
+
+
+
+
+Network Working Group                                          F. Martin
+Internet-Draft                                           Peachymango.org
+Updates: 6724 (if approved)                                      X. Xiao
+Intended status: Standards Track          Huawei Technologies Dusseldorf
+Expires: 2 March 2027                                       B. Carpenter
+                                                  University of Auckland
+                                                          29 August 2026
+
+
+               Updates to IPv6 Default Address Selection
+              draft-martin-ipv6-addr-selection-updates-00
+
+Abstract
+
+   This document updates RFC 6724 with three related improvements to
+   IPv6 destination address selection.  The updates allow observed or
+   recent communication performance to influence ordering, incorporate
+   likely source/destination address pairs when sorting candidates, and
+   mitigate cases where Rule 9 defeats DNS-based load spreading in data-
+   center environments.  All three enhancements are intended to be
+   implementable internally by getaddrinfo() or an equivalent system
+   mechanism, without changing the existing API or requiring application
+   source-code changes.
+
+About This Document
+
+   This note is to be removed before publishing as an RFC.
+
+   The latest revision of this draft can be found at
+   https://github.com/franckhlmartin/ietf-draft-ipv6-addr-selection-
+   updates/ (https://github.com/franckhlmartin/ietf-draft-ipv6-addr-
+   selection-updates/).  Status information for this document may be
+   found at https://datatracker.ietf.org/doc/draft-martin-ipv6-addr-
+   selection-updates/ (https://datatracker.ietf.org/doc/draft-martin-
+   ipv6-addr-selection-updates/).
+
+   Discussion of this document takes place on the v6ops Working Group
+   mailing list (mailto:v6ops@ietf.org (mailto:v6ops@ietf.org)), which
+   is archived at https://mailarchive.ietf.org/arch/browse/v6ops/
+   (https://mailarchive.ietf.org/arch/browse/v6ops/).  Subscribe at
+   https://www.ietf.org/mailman/listinfo/v6ops/
+   (https://www.ietf.org/mailman/listinfo/v6ops/).  Working group
+   assignment (v6ops versus 6man) is to be determined at adoption time.
+
+   Source for this draft and an issue tracker can be found at
+   https://github.com/franckhlmartin/ietf-draft-ipv6-addr-selection-
+   updates (https://github.com/franckhlmartin/ietf-draft-ipv6-addr-
+   selection-updates).
+
+
+
+Martin, et al.            Expires 2 March 2027                  [Page 1]
+
+Internet-Draft         ipv6-addr-selection-updates           August 2026
+
+
+Status of This Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at https://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on 2 March 2027.
+
+Copyright Notice
+
+   Copyright (c) 2026 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents (https://trustee.ietf.org/
+   license-info) in effect on the date of publication of this document.
+   Please review these documents carefully, as they describe your rights
+   and restrictions with respect to this document.  Code Components
+   extracted from this document must include Revised BSD License text as
+   described in Section 4.e of the Trust Legal Provisions and are
+   provided without warranty as described in the Revised BSD License.
+
+Table of Contents
+
+   1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   3
+     1.1.  Requirements Language . . . . . . . . . . . . . . . . . .   3
+     1.2.  Motivation  . . . . . . . . . . . . . . . . . . . . . . .   3
+     1.3.  Scope . . . . . . . . . . . . . . . . . . . . . . . . . .   3
+     1.4.  Design Principle  . . . . . . . . . . . . . . . . . . . .   3
+   2.  Terminology . . . . . . . . . . . . . . . . . . . . . . . . .   4
+   3.  Updates to RFC6724  . . . . . . . . . . . . . . . . . . . . .   4
+     3.1.  Performance-Aware Destination Selection . . . . . . . . .   4
+     3.2.  Source/Destination Pair Consideration . . . . . . . . . .   4
+     3.3.  Data-Center Destination Selection . . . . . . . . . . . .   5
+   4.  Implementation and Deployment Considerations  . . . . . . . .   5
+   5.  Security Considerations . . . . . . . . . . . . . . . . . . .   5
+   6.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .   5
+   7.  Acknowledgements  . . . . . . . . . . . . . . . . . . . . . .   6
+   8.  Normative References  . . . . . . . . . . . . . . . . . . . .   6
+
+
+
+Martin, et al.            Expires 2 March 2027                  [Page 2]
+
+Internet-Draft         ipv6-addr-selection-updates           August 2026
+
+
+   9.  Informative References  . . . . . . . . . . . . . . . . . . .   6
+   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .   6
+
+1.  Introduction
+
+1.1.  Requirements Language
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+   "OPTIONAL" in this document are to be interpreted as described in BCP
+   14 [RFC2119] [RFC8174] when, and only when, they appear in all
+   capitals, as shown here.
+
+1.2.  Motivation
+
+   Applications commonly use getaddrinfo() [RFC3493] to obtain an
+   ordered list of destination addresses.  [RFC6724] defines the default
+   destination address selection algorithm that implementations such as
+   glibc apply when sorting that list.  The rules provide useful
+   interoperability and policy control on the global Internet, but three
+   operational gaps have emerged:
+
+   *  *Performance:* Static rules do not reflect observed or recent
+      communication performance on a particular host, network,
+      destination, interface, or time period.
+   *  *Address pairs:* Sorting destinations without considering the
+      likely source/destination pair can yield suboptimal or incorrect
+      connectivity, especially when multiple source addresses are
+      available.
+   *  *Data centers:* Rule 9 ("Use longest matching prefix") can
+      collapse DNS round-robin or similar load-spreading techniques to a
+      deterministic order, concentrating traffic on a single backend.
+
+1.3.  Scope
+
+   This document is a focused update to destination address selection
+   (Section 6 of [RFC6724]).  Source address selection (Section 5) is
+   out of scope except where needed to evaluate source/destination pairs
+   for destination ordering.
+
+1.4.  Design Principle
+
+   All three enhancements SHOULD be implementable internally by
+   getaddrinfo() or the equivalent system resolver mechanism.
+   Applications SHOULD NOT need API changes or source-code modifications
+   to benefit.  Experimental evidence for address-pair-aware ordering
+   appears in [GET-ADDR-PAIRS].
+
+
+
+
+Martin, et al.            Expires 2 March 2027                  [Page 3]
+
+Internet-Draft         ipv6-addr-selection-updates           August 2026
+
+
+2.  Terminology
+
+   *Destination address selection:* The process by which a host orders
+   candidate destination addresses before returning them to an
+   application, as defined in [RFC6724].
+
+   *Address pair:* A combination of a selected or likely source address
+   and a candidate destination address used to evaluate connectivity or
+   ordering for a given communication attempt.
+
+3.  Updates to RFC6724
+
+   This section specifies updates to destination address selection in
+   [RFC6724].  Exact rule numbering and ordering relative to existing
+   Rules 1--10 are for further editor and working group discussion.
+
+3.1.  Performance-Aware Destination Selection
+
+   Implementations MAY use observed or recent communication performance
+   when ordering destination addresses that are otherwise equal under
+   Rules 1--8.  When applied, this behavior SHOULD integrate with or
+   replace the tie-breaking role of Rules 9 and 10 for affected
+   candidates.
+
+   |  TODO: Specify ordering relative to Rules 9 and 10; define what
+   |  "observed or recent performance" means (latency, loss, success
+   |  rate, scope, and retention period).
+
+3.2.  Source/Destination Pair Consideration
+
+   When sorting destination addresses, implementations SHOULD consider
+   the likely source address that would be used for each candidate
+   destination, not only the destination in isolation.  Ordering SHOULD
+   prefer source/destination pairs that are more likely to succeed or
+   perform well.
+
+   This update aligns with the implementation architecture described in
+   [RFC6724], where getaddrinfo() may obtain source-address information
+   when sorting destinations.  [GET-ADDR-PAIRS] demonstrates a prototype
+   approach.
+
+   |  TODO: Normative text for pair evaluation and interaction with
+   |  existing Rules 2, 5, and 9.
+
+
+
+
+
+
+
+
+Martin, et al.            Expires 2 March 2027                  [Page 4]
+
+Internet-Draft         ipv6-addr-selection-updates           August 2026
+
+
+3.3.  Data-Center Destination Selection
+
+   In environments where many servers are functionally equidistant and
+   operators rely on DNS or similar mechanisms to spread load, Rule 9
+   SHOULD NOT deterministically collapse an intentionally varied address
+   order to a single preferred destination when administrative policy
+   indicates a data-center or load-spreading context.
+
+   |  TODO: Define how implementations detect or configure data-center
+   |  behavior (for example, policy table, /etc/gai.conf, or scope
+   |  heuristics) without requiring application changes.
+
+4.  Implementation and Deployment Considerations
+
+   Implementations that apply these updates inside getaddrinfo()
+   preserve compatibility with existing applications that iterate the
+   returned address list.  Operators MAY use existing policy mechanisms
+   such as /etc/gai.conf on glibc-based systems to influence precedence;
+   however, such files alone do not fully disable Rule 9 today.
+
+   Backward compatibility on the global Internet MUST be preserved:
+   default behavior outside configured or detected data-center contexts
+   SHOULD remain aligned with [RFC6724] unless administrative policy
+   overrides it.
+
+   This document is related to, but distinct from, the Enhanced Dual
+   Stack (EDS) framework [EDS].  EDS describes a broader host-side
+   deployment model; this document normatively updates destination
+   address selection rules.
+
+5.  Security Considerations
+
+   Performance caches or probes used for address ordering MUST NOT
+   expose confidential traffic patterns beyond what the host already
+   observes locally.  Implementations SHOULD bound retention of
+   performance state and resist poisoning of ordering decisions from
+   unauthenticated off-path input.
+
+   |  TODO: Expand (cache poisoning, timing side channels, probe
+   |  amplification).
+
+6.  IANA Considerations
+
+   This document has no IANA actions.
+
+
+
+
+
+
+
+Martin, et al.            Expires 2 March 2027                  [Page 5]
+
+Internet-Draft         ipv6-addr-selection-updates           August 2026
+
+
+7.  Acknowledgements
+
+   XiPeng Xiao proposed co-authoring this focused [RFC6724] update.
+   Brian Carpenter's getapr work informed the source/destination pair
+   consideration.  Discussion on the v6ops mailing list, including
+   threads around Enhanced Dual Stack, helped shape the scope.
+
+8.  Normative References
+
+   [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119,
+              DOI 10.17487/RFC2119, March 1997,
+              <https://www.rfc-editor.org/info/rfc2119>.
+
+   [RFC3493]  Gilligan, R., Thomson, S., Bound, J., McCann, J., and W.
+              Stevens, "Basic Socket Interface Extensions for IPv6",
+              RFC 3493, DOI 10.17487/RFC3493, March 2003,
+              <https://www.rfc-editor.org/info/rfc3493>.
+
+   [RFC6724]  Thaler, D., Ed., Draves, R., Matsumoto, A., and T. Chown,
+              "Default Address Selection for Internet Protocol Version 6
+              (IPv6)", RFC 6724, DOI 10.17487/RFC6724, September 2012,
+              <https://www.rfc-editor.org/info/rfc6724>.
+
+   [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+              2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
+              May 2017, <https://www.rfc-editor.org/info/rfc8174>.
+
+9.  Informative References
+
+   [EDS]      Xiao, X., "Enhanced Dual Stack: Automatic IPv6/IPv4
+              Selection Based on Performance", 4 July 2026,
+              <https://datatracker.ietf.org/doc/html/draft-xiao-v6ops-
+              eds-01>.
+
+   [GET-ADDR-PAIRS]
+              Carpenter, B., "Get Address Pairs for Socket Programming
+              in Python", <https://github.com/becarpenter/getapr>.
+
+Authors' Addresses
+
+   Franck Martin
+   Peachymango.org
+   Email: franck@peachymango.org
+
+
+   XiPeng Xiao
+   Huawei Technologies Dusseldorf
+
+
+
+Martin, et al.            Expires 2 March 2027                  [Page 6]
+
+Internet-Draft         ipv6-addr-selection-updates           August 2026
+
+
+   Email: xipengxiao@gmail.com
+
+
+   Brian E. Carpenter
+   University of Auckland
+   Email: brian.e.carpenter@gmail.com
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Martin, et al.            Expires 2 March 2027                  [Page 7]

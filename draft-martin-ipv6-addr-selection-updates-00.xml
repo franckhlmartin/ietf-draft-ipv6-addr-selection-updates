@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- name="GENERATOR" content="github.com/mmarkdown/mmark Mmark Markdown Processor - mmark.miek.nl" -->
+<rfc version="3" ipr="trust200902" docName="draft-martin-ipv6-addr-selection-updates-00" category="std" xml:lang="en" xmlns:xi="http://www.w3.org/2001/XInclude" updates="6724" indexInclude="true">
+
+<front>
+<title abbrev="ipv6-addr-selection-updates">Updates to IPv6 Default Address Selection</title><seriesInfo value="draft-martin-ipv6-addr-selection-updates-00" status="standard" name="Internet-Draft"></seriesInfo>
+<author initials="F." surname="Martin" fullname="Franck Martin"><organization>Peachymango.org</organization><address><postal><street></street>
+</postal><email>franck@peachymango.org</email>
+</address></author><author initials="X." surname="Xiao" fullname="XiPeng Xiao"><organization>Huawei Technologies Dusseldorf</organization><address><postal><street></street>
+</postal><email>xipengxiao@gmail.com</email>
+</address></author><author initials="B." surname="Carpenter" fullname="Brian E. Carpenter"><organization>University of Auckland</organization><address><postal><street></street>
+</postal><email>brian.e.carpenter@gmail.com</email>
+</address></author><date year="2026" month="August" day="29"></date>
+<area>Internet</area>
+<workgroup></workgroup>
+<keyword>IPv6</keyword>
+<keyword>RFC6724</keyword>
+<keyword>address selection</keyword>
+<keyword>getaddrinfo</keyword>
+<keyword>data center</keyword>
+
+<abstract>
+<t>This document updates RFC 6724 with three related improvements to
+IPv6 destination address selection. The updates allow observed or recent
+communication performance to influence ordering, incorporate likely
+source/destination address pairs when sorting candidates, and mitigate
+cases where Rule 9 defeats DNS-based load spreading in data-center
+environments. All three enhancements are intended to be implementable
+internally by <tt>getaddrinfo()</tt> or an equivalent system mechanism, without
+changing the existing API or requiring application source-code changes.</t>
+</abstract>
+
+<note><name>About This Document</name>
+<t>This note is to be removed before publishing as an RFC.</t>
+<t>The latest revision of this draft can be found at
+<eref target="https://github.com/franckhlmartin/ietf-draft-ipv6-addr-selection-updates/">https://github.com/franckhlmartin/ietf-draft-ipv6-addr-selection-updates/</eref>.
+Status information for this document may be found at
+<eref target="https://datatracker.ietf.org/doc/draft-martin-ipv6-addr-selection-updates/">https://datatracker.ietf.org/doc/draft-martin-ipv6-addr-selection-updates/</eref>.</t>
+<t>Discussion of this document takes place on the v6ops Working Group
+mailing list (<eref target="mailto:v6ops@ietf.org">mailto:v6ops@ietf.org</eref>), which is archived at
+<eref target="https://mailarchive.ietf.org/arch/browse/v6ops/">https://mailarchive.ietf.org/arch/browse/v6ops/</eref>. Subscribe at
+<eref target="https://www.ietf.org/mailman/listinfo/v6ops/">https://www.ietf.org/mailman/listinfo/v6ops/</eref>. Working group assignment
+(v6ops versus 6man) is to be determined at adoption time.</t>
+<t>Source for this draft and an issue tracker can be found at
+<eref target="https://github.com/franckhlmartin/ietf-draft-ipv6-addr-selection-updates">https://github.com/franckhlmartin/ietf-draft-ipv6-addr-selection-updates</eref>.</t>
+</note>
+
+</front>
+
+<middle>
+
+<section anchor="introduction"><name>Introduction</name>
+
+<section anchor="requirements-language"><name>Requirements Language</name>
+<t>The key words &quot;<bcp14>MUST</bcp14>&quot;, &quot;<bcp14>MUST NOT</bcp14>&quot;, &quot;<bcp14>REQUIRED</bcp14>&quot;, &quot;<bcp14>SHALL</bcp14>&quot;,
+&quot;<bcp14>SHALL NOT</bcp14>&quot;, &quot;<bcp14>SHOULD</bcp14>&quot;, &quot;<bcp14>SHOULD NOT</bcp14>&quot;, &quot;<bcp14>RECOMMENDED</bcp14>&quot;,
+&quot;<bcp14>NOT RECOMMENDED</bcp14>&quot;, &quot;<bcp14>MAY</bcp14>&quot;, and &quot;<bcp14>OPTIONAL</bcp14>&quot; in this document are to be
+interpreted as described in BCP 14 <xref target="RFC2119"></xref> <xref target="RFC8174"></xref> when, and only when,
+they appear in all capitals, as shown here.</t>
+</section>
+
+<section anchor="motivation"><name>Motivation</name>
+<t>Applications commonly use <tt>getaddrinfo()</tt> <xref target="RFC3493"></xref> to obtain an ordered
+list of destination addresses. <xref target="RFC6724"></xref> defines the default destination
+address selection algorithm that implementations such as glibc apply when
+sorting that list. The rules provide useful interoperability and policy
+control on the global Internet, but three operational gaps have emerged:</t>
+
+<ul spacing="compact">
+<li><strong>Performance:</strong> Static rules do not reflect observed or recent
+communication performance on a particular host, network, destination,
+interface, or time period.</li>
+<li><strong>Address pairs:</strong> Sorting destinations without considering the likely
+source/destination pair can yield suboptimal or incorrect connectivity,
+especially when multiple source addresses are available.</li>
+<li><strong>Data centers:</strong> Rule 9 (&quot;Use longest matching prefix&quot;) can collapse
+DNS round-robin or similar load-spreading techniques to a deterministic
+order, concentrating traffic on a single backend.</li>
+</ul>
+</section>
+
+<section anchor="scope"><name>Scope</name>
+<t>This document is a focused update to destination address selection
+(Section 6 of <xref target="RFC6724"></xref>). Source address selection (Section 5) is out
+of scope except where needed to evaluate source/destination pairs for
+destination ordering.</t>
+</section>
+
+<section anchor="design-principle"><name>Design Principle</name>
+<t>All three enhancements SHOULD be implementable internally by <tt>getaddrinfo()</tt>
+or the equivalent system resolver mechanism. Applications SHOULD NOT need
+API changes or source-code modifications to benefit. Experimental evidence
+for address-pair-aware ordering appears in <xref target="GET-ADDR-PAIRS"></xref>.</t>
+</section>
+</section>
+
+<section anchor="terminology"><name>Terminology</name>
+<t><strong>Destination address selection:</strong> The process by which a host orders
+candidate destination addresses before returning them to an application,
+as defined in <xref target="RFC6724"></xref>.</t>
+<t><strong>Address pair:</strong> A combination of a selected or likely source address
+and a candidate destination address used to evaluate connectivity or
+ordering for a given communication attempt.</t>
+</section>
+
+<section anchor="updates-to-rfc6724"><name>Updates to RFC6724</name>
+<t>This section specifies updates to destination address selection in
+<xref target="RFC6724"></xref>. Exact rule numbering and ordering relative to existing
+Rules 1--10 are for further editor and working group discussion.</t>
+
+<section anchor="performance-aware"><name>Performance-Aware Destination Selection</name>
+<t>Implementations MAY use observed or recent communication performance
+when ordering destination addresses that are otherwise equal under
+Rules 1--8. When applied, this behavior SHOULD integrate with or
+replace the tie-breaking role of Rules 9 and 10 for affected candidates.</t>
+<blockquote><t>TODO: Specify ordering relative to Rules 9 and 10; define what
+&quot;observed or recent performance&quot; means (latency, loss, success rate,
+scope, and retention period).</t>
+</blockquote></section>
+
+<section anchor="address-pairs"><name>Source/Destination Pair Consideration</name>
+<t>When sorting destination addresses, implementations SHOULD consider the
+likely source address that would be used for each candidate destination,
+not only the destination in isolation. Ordering SHOULD prefer
+source/destination pairs that are more likely to succeed or perform well.</t>
+<t>This update aligns with the implementation architecture described in
+<xref target="RFC6724"></xref>, where <tt>getaddrinfo()</tt> may obtain source-address information
+when sorting destinations. <xref target="GET-ADDR-PAIRS"></xref> demonstrates a prototype
+approach.</t>
+<blockquote><t>TODO: Normative text for pair evaluation and interaction with existing
+Rules 2, 5, and 9.</t>
+</blockquote></section>
+
+<section anchor="data-center"><name>Data-Center Destination Selection</name>
+<t>In environments where many servers are functionally equidistant and
+operators rely on DNS or similar mechanisms to spread load, Rule 9
+SHOULD NOT deterministically collapse an intentionally varied address
+order to a single preferred destination when administrative policy
+indicates a data-center or load-spreading context.</t>
+<blockquote><t>TODO: Define how implementations detect or configure data-center
+behavior (for example, policy table, <tt>/etc/gai.conf</tt>, or scope
+heuristics) without requiring application changes.</t>
+</blockquote></section>
+</section>
+
+<section anchor="implementation-and-deployment-considerations"><name>Implementation and Deployment Considerations</name>
+<t>Implementations that apply these updates inside <tt>getaddrinfo()</tt> preserve
+compatibility with existing applications that iterate the returned address
+list. Operators MAY use existing policy mechanisms such as <tt>/etc/gai.conf</tt>
+on glibc-based systems to influence precedence; however, such files alone
+do not fully disable Rule 9 today.</t>
+<t>Backward compatibility on the global Internet MUST be preserved: default
+behavior outside configured or detected data-center contexts SHOULD
+remain aligned with <xref target="RFC6724"></xref> unless administrative policy overrides it.</t>
+<t>This document is related to, but distinct from, the Enhanced Dual Stack
+(EDS) framework <xref target="EDS"></xref>. EDS describes a broader host-side deployment
+model; this document normatively updates destination address selection
+rules.</t>
+</section>
+
+<section anchor="security-considerations"><name>Security Considerations</name>
+<t>Performance caches or probes used for address ordering MUST NOT expose
+confidential traffic patterns beyond what the host already observes locally.
+Implementations SHOULD bound retention of performance state and resist
+poisoning of ordering decisions from unauthenticated off-path input.</t>
+<blockquote><t>TODO: Expand (cache poisoning, timing side channels, probe amplification).</t>
+</blockquote></section>
+
+<section anchor="iana-considerations"><name>IANA Considerations</name>
+<t>This document has no IANA actions.</t>
+</section>
+
+<section anchor="acknowledgements"><name>Acknowledgements</name>
+<t>XiPeng Xiao proposed co-authoring this focused <xref target="RFC6724"></xref> update.
+Brian Carpenter's getapr work informed the source/destination pair
+consideration. Discussion on the v6ops mailing list, including threads
+around Enhanced Dual Stack, helped shape the scope.</t>
+</section>
+
+</middle>
+
+<back>
+<references><name>Normative References</name>
+<xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.2119.xml"/>
+<xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.3493.xml"/>
+<xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.6724.xml"/>
+<xi:include href="https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8174.xml"/>
+</references>
+<references><name>Informative References</name>
+<reference anchor="EDS" target="https://datatracker.ietf.org/doc/html/draft-xiao-v6ops-eds-01">
+  <front>
+    <title>Enhanced Dual Stack: Automatic IPv6/IPv4 Selection Based on Performance</title>
+    <author fullname="XiPeng Xiao" initials="X." surname="Xiao">
+      <organization>Huawei Technologies Dusseldorf</organization>
+    </author>
+    <date year="2026" month="July" day="4"></date>
+  </front>
+</reference>
+<reference anchor="GET-ADDR-PAIRS" target="https://github.com/becarpenter/getapr">
+  <front>
+    <title>Get Address Pairs for Socket Programming in Python</title>
+    <author fullname="Brian E. Carpenter" initials="B." surname="Carpenter">
+      <organization>University of Auckland</organization>
+    </author>
+  </front>
+</reference>
+</references>
+
+</back>
+
+</rfc>
