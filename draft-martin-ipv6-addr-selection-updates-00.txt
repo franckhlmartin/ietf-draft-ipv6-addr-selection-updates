@@ -20,11 +20,11 @@ Abstract
    IPv6 destination address selection.  The updates allow observed or
    recent communication performance to influence ordering, incorporate
    likely source/destination address pairs when sorting candidates, and
-   mitigate cases where Rule 9 defeats DNS-based load spreading in data-
-   center environments.  All three enhancements are intended to be
-   implementable internally by getaddrinfo() or an equivalent system
-   mechanism, without changing the existing API or requiring application
-   source-code changes.
+   let operators preserve DNS load-balancing order where Rule 9 would
+   otherwise override it.  All three enhancements are OPTIONAL, off by
+   default, and intended to be implementable internally by getaddrinfo()
+   or an equivalent system mechanism, without changing the existing API
+   or requiring application source-code changes.
 
 About This Document
 
@@ -94,18 +94,18 @@ Table of Contents
    1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   3
      1.1.  Requirements Language . . . . . . . . . . . . . . . . . .   3
      1.2.  Motivation  . . . . . . . . . . . . . . . . . . . . . . .   3
-     1.3.  Scope . . . . . . . . . . . . . . . . . . . . . . . . . .   3
-     1.4.  Design Principle  . . . . . . . . . . . . . . . . . . . .   3
+     1.3.  Scope . . . . . . . . . . . . . . . . . . . . . . . . . .   4
+     1.4.  Design Principle  . . . . . . . . . . . . . . . . . . . .   4
    2.  Terminology . . . . . . . . . . . . . . . . . . . . . . . . .   4
    3.  Updates to RFC6724  . . . . . . . . . . . . . . . . . . . . .   4
-     3.1.  Performance-Aware Destination Selection . . . . . . . . .   4
-     3.2.  Source/Destination Pair Consideration . . . . . . . . . .   4
-     3.3.  Data-Center Destination Selection . . . . . . . . . . . .   5
-   4.  Implementation and Deployment Considerations  . . . . . . . .   5
-   5.  Security Considerations . . . . . . . . . . . . . . . . . . .   5
-   6.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .   5
+     3.1.  Performance-Aware Destination Selection . . . . . . . . .   5
+     3.2.  Source/Destination Pair Consideration . . . . . . . . . .   5
+     3.3.  Preserving DNS Load-Balancing Order . . . . . . . . . . .   5
+   4.  Implementation and Deployment Considerations  . . . . . . . .   6
+   5.  Security Considerations . . . . . . . . . . . . . . . . . . .   6
+   6.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .   6
    7.  Acknowledgements  . . . . . . . . . . . . . . . . . . . . . .   6
-   8.  Normative References  . . . . . . . . . . . . . . . . . . . .   6
+   8.  Normative References  . . . . . . . . . . . . . . . . . . . .   7
 
 
 
@@ -114,10 +114,23 @@ Martin, et al.            Expires 2 March 2027                  [Page 2]
 Internet-Draft         ipv6-addr-selection-updates           August 2026
 
 
-   9.  Informative References  . . . . . . . . . . . . . . . . . . .   6
-   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .   6
+   9.  Informative References  . . . . . . . . . . . . . . . . . . .   7
+   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .   7
 
 1.  Introduction
+
+   [RFC6724] Section 6 notes that Rules 9 and 10 MAY be superseded when
+   an implementation has other means of sorting destination addresses---
+   for example, when it somehow knows which destination addresses will
+   result in the "best" communications performance.  The purpose of this
+   document is to better qualify (based on operational experience) when
+   an implementation MAY supersede those rules and how, so that behavior
+   is standardized rather than left to ad hoc local heuristics.  This
+   document does not limit operators or implementations: if other means
+   of sorting produce better results, they remain permitted and need not
+   be confined to the mechanisms specified here.  The implementations
+   described in this document are believed to benefit operators in their
+   IPv6 deployments and IPv4 retirement.
 
 1.1.  Requirements Language
 
@@ -138,14 +151,33 @@ Internet-Draft         ipv6-addr-selection-updates           August 2026
 
    *  *Performance:* Static rules do not reflect observed or recent
       communication performance on a particular host, network,
-      destination, interface, or time period.
+      destination, interface, or time period.  Some of these gaps are
+      already addressed at the application layer by connection racing,
+      as specified in Happy Eyeballs [RFC8305], which tries multiple
+      destination addresses concurrently rather than relying solely on
+      resolver ordering.
    *  *Address pairs:* Sorting destinations without considering the
       likely source/destination pair can yield suboptimal or incorrect
       connectivity, especially when multiple source addresses are
       available.
-   *  *Data centers:* Rule 9 ("Use longest matching prefix") can
-      collapse DNS round-robin or similar load-spreading techniques to a
-      deterministic order, concentrating traffic on a single backend.
+
+
+
+
+
+Martin, et al.            Expires 2 March 2027                  [Page 3]
+
+Internet-Draft         ipv6-addr-selection-updates           August 2026
+
+
+   *  *DNS load balancing:* Operators commonly spread load by returning
+      multiple address records and varying their order---DNS-based load
+      balancing as described in [RFC1794].  Rule 9 ("Use longest
+      matching prefix") can collapse that intentionally varied order to
+      a single preferred destination, defeating the operator's intent.
+      DNS and routing communities have offered conflicting advice on
+      whether resolver ordering or DNS response order should prevail;
+      this document closes that gap for configured deployments.
 
 1.3.  Scope
 
@@ -156,19 +188,16 @@ Internet-Draft         ipv6-addr-selection-updates           August 2026
 
 1.4.  Design Principle
 
+   All three enhancements are OPTIONAL.  Implementations MUST NOT enable
+   them by default; each enhancement MUST remain disabled until an
+   operator explicitly configures it, so current [RFC6724] behavior is
+   preserved without deliberate administrative input.
+
    All three enhancements SHOULD be implementable internally by
    getaddrinfo() or the equivalent system resolver mechanism.
    Applications SHOULD NOT need API changes or source-code modifications
    to benefit.  Experimental evidence for address-pair-aware ordering
    appears in [GET-ADDR-PAIRS].
-
-
-
-
-Martin, et al.            Expires 2 March 2027                  [Page 3]
-
-Internet-Draft         ipv6-addr-selection-updates           August 2026
-
 
 2.  Terminology
 
@@ -185,6 +214,17 @@ Internet-Draft         ipv6-addr-selection-updates           August 2026
    This section specifies updates to destination address selection in
    [RFC6724].  Exact rule numbering and ordering relative to existing
    Rules 1--10 are for further editor and working group discussion.
+
+
+
+
+
+
+
+Martin, et al.            Expires 2 March 2027                  [Page 4]
+
+Internet-Draft         ipv6-addr-selection-updates           August 2026
+
 
 3.1.  Performance-Aware Destination Selection
 
@@ -214,29 +254,41 @@ Internet-Draft         ipv6-addr-selection-updates           August 2026
    |  TODO: Normative text for pair evaluation and interaction with
    |  existing Rules 2, 5, and 9.
 
+3.3.  Preserving DNS Load-Balancing Order
+
+   Operators who use DNS-based load balancing [RFC1794]---for example,
+   multiple A or AAAA records whose order is rotated by the
+   authoritative server---expect clients to try addresses in the order
+   returned by DNS.  Rule 9 reorders those candidates by longest
+   matching prefix, which can concentrate traffic on one backend and
+   undermine the operator's load-spreading intent.  DNS operators and
+   routing-oriented guidance have historically given conflicting advice
+   on this point; this section standardizes operator-controlled
+   behavior.
+
+   Implementations MUST support administrative configuration of one or
+   more IPv4 and IPv6 prefix ranges for which Rule 9 does not apply.
+   This update does not change ordering across address families: Rules
+   1--8, including default IPv6-over-IPv4 preference, continue to apply
+   unchanged.  When Rule 9 would otherwise reorder candidates of the
+   same address family, and a candidate destination address falls within
+   a configured range, the implementation MUST preserve the order
+   received from the name-resolution step (for example, the order of A
 
 
 
-
-
-
-
-Martin, et al.            Expires 2 March 2027                  [Page 4]
+Martin, et al.            Expires 2 March 2027                  [Page 5]
 
 Internet-Draft         ipv6-addr-selection-updates           August 2026
 
 
-3.3.  Data-Center Destination Selection
-
-   In environments where many servers are functionally equidistant and
-   operators rely on DNS or similar mechanisms to spread load, Rule 9
-   SHOULD NOT deterministically collapse an intentionally varied address
-   order to a single preferred destination when administrative policy
-   indicates a data-center or load-spreading context.
-
-   |  TODO: Define how implementations detect or configure data-center
-   |  behavior (for example, policy table, /etc/gai.conf, or scope
-   |  heuristics) without requiring application changes.
+   or AAAA records in the DNS response) among those same-family
+   candidates, rather than reordering them by longest matching prefix.
+   This section does not introduce a new within-family sort order; it
+   only prevents Rule 9 from overriding DNS response order for
+   configured destinations.  Configuration mechanisms MAY include a
+   policy table, /etc/gai.conf, or an equivalent system resolver
+   setting; no application changes are required.
 
 4.  Implementation and Deployment Considerations
 
@@ -246,10 +298,10 @@ Internet-Draft         ipv6-addr-selection-updates           August 2026
    such as /etc/gai.conf on glibc-based systems to influence precedence;
    however, such files alone do not fully disable Rule 9 today.
 
-   Backward compatibility on the global Internet MUST be preserved:
-   default behavior outside configured or detected data-center contexts
-   SHOULD remain aligned with [RFC6724] unless administrative policy
-   overrides it.
+   Backward compatibility on the global Internet MUST be preserved: with
+   no operator configuration, implementations MUST behave as [RFC6724].
+   None of the enhancements in this document take effect until
+   explicitly enabled.
 
    This document is related to, but distinct from, the Enhanced Dual
    Stack (EDS) framework [EDS].  EDS describes a broader host-side
@@ -271,23 +323,20 @@ Internet-Draft         ipv6-addr-selection-updates           August 2026
 
    This document has no IANA actions.
 
-
-
-
-
-
-
-Martin, et al.            Expires 2 March 2027                  [Page 5]
-
-Internet-Draft         ipv6-addr-selection-updates           August 2026
-
-
 7.  Acknowledgements
 
    XiPeng Xiao proposed co-authoring this focused [RFC6724] update.
    Brian Carpenter's getapr work informed the source/destination pair
    consideration.  Discussion on the v6ops mailing list, including
    threads around Enhanced Dual Stack, helped shape the scope.
+
+
+
+
+Martin, et al.            Expires 2 March 2027                  [Page 6]
+
+Internet-Draft         ipv6-addr-selection-updates           August 2026
+
 
 8.  Normative References
 
@@ -321,6 +370,13 @@ Internet-Draft         ipv6-addr-selection-updates           August 2026
               Carpenter, B., "Get Address Pairs for Socket Programming
               in Python", <https://github.com/becarpenter/getapr>.
 
+   [RFC1794]  Brisco, T., "DNS Support for Load Balancing", April 1995,
+              <https://www.rfc-editor.org/info/rfc1794>.
+
+   [RFC8305]  Schinazi, D. and T. Pauly, "Happy Eyeballs Version 2:
+              Better Connectivity Using Concurrency", December 2017,
+              <https://www.rfc-editor.org/info/rfc8305>.
+
 Authors' Addresses
 
    Franck Martin
@@ -333,7 +389,7 @@ Authors' Addresses
 
 
 
-Martin, et al.            Expires 2 March 2027                  [Page 6]
+Martin, et al.            Expires 2 March 2027                  [Page 7]
 
 Internet-Draft         ipv6-addr-selection-updates           August 2026
 
@@ -389,4 +445,4 @@ Internet-Draft         ipv6-addr-selection-updates           August 2026
 
 
 
-Martin, et al.            Expires 2 March 2027                  [Page 7]
+Martin, et al.            Expires 2 March 2027                  [Page 8]

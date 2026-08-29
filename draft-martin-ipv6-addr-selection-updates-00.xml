@@ -17,17 +17,18 @@
 <keyword>RFC6724</keyword>
 <keyword>address selection</keyword>
 <keyword>getaddrinfo</keyword>
-<keyword>data center</keyword>
+<keyword>DNS load balancing</keyword>
 
 <abstract>
 <t>This document updates RFC 6724 with three related improvements to
 IPv6 destination address selection. The updates allow observed or recent
 communication performance to influence ordering, incorporate likely
-source/destination address pairs when sorting candidates, and mitigate
-cases where Rule 9 defeats DNS-based load spreading in data-center
-environments. All three enhancements are intended to be implementable
-internally by <tt>getaddrinfo()</tt> or an equivalent system mechanism, without
-changing the existing API or requiring application source-code changes.</t>
+source/destination address pairs when sorting candidates, and let
+operators preserve DNS load-balancing order where Rule 9 would otherwise
+override it. All three enhancements are OPTIONAL, off by default, and
+intended to be implementable internally by <tt>getaddrinfo()</tt> or an
+equivalent system mechanism, without changing the existing API or
+requiring application source-code changes.</t>
 </abstract>
 
 <note><name>About This Document</name>
@@ -50,6 +51,17 @@ mailing list (<eref target="mailto:v6ops@ietf.org">mailto:v6ops@ietf.org</eref>)
 <middle>
 
 <section anchor="introduction"><name>Introduction</name>
+<t><xref target="RFC6724"></xref> Section 6 notes that Rules 9 and 10 MAY be superseded when an
+implementation has other means of sorting destination addresses---for
+example, when it somehow knows which destination addresses will result in
+the &quot;best&quot; communications performance. The purpose of this document is to
+better qualify (based on operational experience) when an implementation MAY supersede those rules and how,
+so that behavior is standardized rather than left to ad hoc local
+heuristics. This document does not limit operators or implementations:
+if other means of sorting produce better results, they remain permitted
+and need not be confined to the mechanisms specified here. The
+implementations described in this document are believed to benefit
+operators in their IPv6 deployments and IPv4 retirement.</t>
 
 <section anchor="requirements-language"><name>Requirements Language</name>
 <t>The key words &quot;<bcp14>MUST</bcp14>&quot;, &quot;<bcp14>MUST NOT</bcp14>&quot;, &quot;<bcp14>REQUIRED</bcp14>&quot;, &quot;<bcp14>SHALL</bcp14>&quot;,
@@ -69,13 +81,21 @@ control on the global Internet, but three operational gaps have emerged:</t>
 <ul spacing="compact">
 <li><strong>Performance:</strong> Static rules do not reflect observed or recent
 communication performance on a particular host, network, destination,
-interface, or time period.</li>
+interface, or time period. Some of these gaps are already addressed at the
+application layer by connection racing, as specified in Happy Eyeballs
+<xref target="RFC8305"></xref>, which tries multiple destination addresses concurrently
+rather than relying solely on resolver ordering.</li>
 <li><strong>Address pairs:</strong> Sorting destinations without considering the likely
 source/destination pair can yield suboptimal or incorrect connectivity,
 especially when multiple source addresses are available.</li>
-<li><strong>Data centers:</strong> Rule 9 (&quot;Use longest matching prefix&quot;) can collapse
-DNS round-robin or similar load-spreading techniques to a deterministic
-order, concentrating traffic on a single backend.</li>
+<li><strong>DNS load balancing:</strong> Operators commonly spread load by returning
+multiple address records and varying their order---DNS-based load
+balancing as described in <xref target="RFC1794"></xref>. Rule 9 (&quot;Use longest matching
+prefix&quot;) can collapse that intentionally varied order to a single
+preferred destination, defeating the operator's intent. DNS and routing
+communities have offered conflicting advice on whether resolver ordering
+or DNS response order should prevail; this document closes that gap for
+configured deployments.</li>
 </ul>
 </section>
 
@@ -87,6 +107,10 @@ destination ordering.</t>
 </section>
 
 <section anchor="design-principle"><name>Design Principle</name>
+<t>All three enhancements are OPTIONAL. Implementations MUST NOT enable them
+by default; each enhancement MUST remain disabled until an operator
+explicitly configures it, so current <xref target="RFC6724"></xref> behavior is preserved
+without deliberate administrative input.</t>
 <t>All three enhancements SHOULD be implementable internally by <tt>getaddrinfo()</tt>
 or the equivalent system resolver mechanism. Applications SHOULD NOT need
 API changes or source-code modifications to benefit. Experimental evidence
@@ -131,16 +155,28 @@ approach.</t>
 Rules 2, 5, and 9.</t>
 </blockquote></section>
 
-<section anchor="data-center"><name>Data-Center Destination Selection</name>
-<t>In environments where many servers are functionally equidistant and
-operators rely on DNS or similar mechanisms to spread load, Rule 9
-SHOULD NOT deterministically collapse an intentionally varied address
-order to a single preferred destination when administrative policy
-indicates a data-center or load-spreading context.</t>
-<blockquote><t>TODO: Define how implementations detect or configure data-center
-behavior (for example, policy table, <tt>/etc/gai.conf</tt>, or scope
-heuristics) without requiring application changes.</t>
-</blockquote></section>
+<section anchor="dns-load-balancing"><name>Preserving DNS Load-Balancing Order</name>
+<t>Operators who use DNS-based load balancing <xref target="RFC1794"></xref>---for example,
+multiple A or AAAA records whose order is rotated by the authoritative
+server---expect clients to try addresses in the order returned by DNS.
+Rule 9 reorders those candidates by longest matching prefix, which can
+concentrate traffic on one backend and undermine the operator's load-spreading intent. DNS operators and routing-oriented guidance have
+historically given conflicting advice on this point; this section
+standardizes operator-controlled behavior.</t>
+<t>Implementations MUST support administrative configuration of one or more
+IPv4 and IPv6 prefix ranges for which Rule 9 does not apply. This update
+does not change ordering across address families: Rules 1--8, including
+default IPv6-over-IPv4 preference, continue to apply unchanged. When Rule
+9 would otherwise reorder candidates of the same address family, and a
+candidate destination address falls within a configured range, the
+implementation MUST preserve the order received from the name-resolution
+step (for example, the order of A or AAAA records in the DNS response)
+among those same-family candidates, rather than reordering them by
+longest matching prefix. This section does not introduce a new within-family sort order; it only prevents Rule 9 from overriding DNS response
+order for configured destinations. Configuration mechanisms MAY include a
+policy table, <tt>/etc/gai.conf</tt>, or an equivalent system resolver setting; no
+application changes are required.</t>
+</section>
 </section>
 
 <section anchor="implementation-and-deployment-considerations"><name>Implementation and Deployment Considerations</name>
@@ -149,9 +185,10 @@ compatibility with existing applications that iterate the returned address
 list. Operators MAY use existing policy mechanisms such as <tt>/etc/gai.conf</tt>
 on glibc-based systems to influence precedence; however, such files alone
 do not fully disable Rule 9 today.</t>
-<t>Backward compatibility on the global Internet MUST be preserved: default
-behavior outside configured or detected data-center contexts SHOULD
-remain aligned with <xref target="RFC6724"></xref> unless administrative policy overrides it.</t>
+<t>Backward compatibility on the global Internet MUST be preserved: with no
+operator configuration, implementations MUST behave as <xref target="RFC6724"></xref>.
+None of the enhancements in this document take effect until explicitly
+enabled.</t>
 <t>This document is related to, but distinct from, the Enhanced Dual Stack
 (EDS) framework <xref target="EDS"></xref>. EDS describes a broader host-side deployment
 model; this document normatively updates destination address selection
@@ -202,6 +239,21 @@ around Enhanced Dual Stack, helped shape the scope.</t>
     <author fullname="Brian E. Carpenter" initials="B." surname="Carpenter">
       <organization>University of Auckland</organization>
     </author>
+  </front>
+</reference>
+<reference anchor="RFC1794" target="https://www.rfc-editor.org/info/rfc1794">
+  <front>
+    <title>DNS Support for Load Balancing</title>
+    <author fullname="T. Brisco" initials="T." surname="Brisco"></author>
+    <date year="1995" month="April"></date>
+  </front>
+</reference>
+<reference anchor="RFC8305" target="https://www.rfc-editor.org/info/rfc8305">
+  <front>
+    <title>Happy Eyeballs Version 2: Better Connectivity Using Concurrency</title>
+    <author fullname="D. Schinazi" initials="D." surname="Schinazi"></author>
+    <author fullname="T. Pauly" initials="T." surname="Pauly"></author>
+    <date year="2017" month="December"></date>
   </front>
 </reference>
 </references>
