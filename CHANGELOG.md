@@ -5,6 +5,11 @@ Formatting-only edits are omitted unless they affect published semantics.
 
 ## Unreleased
 
+- **Abstract:** Clarify that the DNS load-balancing update is for ISP and enterprise
+  operators, not only ISPs.
+- **Acknowledgements:** Remove co-authors XiPeng Xiao and Brian Carpenter; keep thanks
+  to the v6ops mailing list.
+
 - **Introduction:** Frame the draft against [RFC6724] Section 6 (Rules 9 and 10 MAY be
   superseded); qualify scope based on operational experience; clarify that operators are
   not limited to the mechanisms defined here; note expected benefit for IPv6 deployment

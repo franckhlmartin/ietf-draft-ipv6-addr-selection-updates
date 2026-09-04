@@ -20,11 +20,11 @@ Abstract
    IPv6 destination address selection.  The updates allow observed or
    recent communication performance to influence ordering, incorporate
    likely source/destination address pairs when sorting candidates, and
-   let operators preserve DNS load-balancing order where Rule 9 would
-   otherwise override it.  All three enhancements are OPTIONAL, off by
-   default, and intended to be implementable internally by getaddrinfo()
-   or an equivalent system mechanism, without changing the existing API
-   or requiring application source-code changes.
+   let ISP and enterprise operators preserve DNS load-balancing order
+   where Rule 9 would otherwise override it.  All three enhancements are
+   OPTIONAL, off by default, and intended to be implementable internally
+   by getaddrinfo() or an equivalent system mechanism, without changing
+   the existing API or requiring application source-code changes.
 
 About This Document
 
@@ -105,7 +105,7 @@ Table of Contents
    5.  Security Considerations . . . . . . . . . . . . . . . . . . .   6
    6.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .   6
    7.  Acknowledgements  . . . . . . . . . . . . . . . . . . . . . .   6
-   8.  Normative References  . . . . . . . . . . . . . . . . . . . .   7
+   8.  Normative References  . . . . . . . . . . . . . . . . . . . .   6
 
 
 
@@ -325,10 +325,10 @@ Internet-Draft         ipv6-addr-selection-updates           August 2026
 
 7.  Acknowledgements
 
-   XiPeng Xiao proposed co-authoring this focused [RFC6724] update.
-   Brian Carpenter's getapr work informed the source/destination pair
-   consideration.  Discussion on the v6ops mailing list, including
-   threads around Enhanced Dual Stack, helped shape the scope.
+   Discussion on the v6ops mailing list, including threads around
+   Enhanced Dual Stack, helped shape the scope.
+
+8.  Normative References
 
 
 
@@ -337,8 +337,6 @@ Martin, et al.            Expires 2 March 2027                  [Page 6]
 
 Internet-Draft         ipv6-addr-selection-updates           August 2026
 
-
-8.  Normative References
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
@@ -386,6 +384,8 @@ Authors' Addresses
 
    XiPeng Xiao
    Huawei Technologies Dusseldorf
+   Email: xipengxiao@gmail.com
+
 
 
 
@@ -394,12 +394,12 @@ Martin, et al.            Expires 2 March 2027                  [Page 7]
 Internet-Draft         ipv6-addr-selection-updates           August 2026
 
 
-   Email: xipengxiao@gmail.com
-
-
    Brian E. Carpenter
    University of Auckland
    Email: brian.e.carpenter@gmail.com
+
+
+
 
 
 

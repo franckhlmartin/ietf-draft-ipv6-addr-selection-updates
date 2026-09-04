@@ -13,8 +13,8 @@
 IPv6 destination address selection. The updates allow observed or recent
 communication performance to influence ordering, incorporate likely
 source/destination address pairs when sorting candidates, and let
-operators preserve DNS load-balancing order where Rule 9 would otherwise
-override it. All three enhancements are OPTIONAL, off by default, and
+ISP and enterprise operators preserve DNS load-balancing order where
+Rule 9 would otherwise override it. All three enhancements are OPTIONAL, off by default, and
 intended to be implementable internally by  getaddrinfo()  or an
 equivalent system mechanism, without changing the existing API or
 requiring application source-code changes. 
@@ -1280,8 +1280,8 @@ li > p:last-of-type:only-child {
 IPv6 destination address selection. The updates allow observed or recent
 communication performance to influence ordering, incorporate likely
 source/destination address pairs when sorting candidates, and let
-operators preserve DNS load-balancing order where Rule 9 would otherwise
-override it. All three enhancements are OPTIONAL, off by default, and
+ISP and enterprise operators preserve DNS load-balancing order where
+Rule 9 would otherwise override it. All three enhancements are OPTIONAL, off by default, and
 intended to be implementable internally by <code>getaddrinfo()</code> or an
 equivalent system mechanism, without changing the existing API or
 requiring application source-code changes.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
@@ -1635,10 +1635,8 @@ poisoning of ordering decisions from unauthenticated off-path input.<a href="#se
       <h2 id="name-acknowledgements">
 <a href="#section-7" class="section-number selfRef">7. </a><a href="#name-acknowledgements" class="section-name selfRef">Acknowledgements</a>
       </h2>
-<p id="section-7-1">XiPeng Xiao proposed co-authoring this focused <span>[<a href="#RFC6724" class="cite xref">RFC6724</a>]</span> update.
-Brian Carpenter's getapr work informed the source/destination pair
-consideration. Discussion on the v6ops mailing list, including threads
-around Enhanced Dual Stack, helped shape the scope.<a href="#section-7-1" class="pilcrow">¶</a></p>
+<p id="section-7-1">Discussion on the v6ops mailing list, including threads around Enhanced
+Dual Stack, helped shape the scope.<a href="#section-7-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <section id="section-8">

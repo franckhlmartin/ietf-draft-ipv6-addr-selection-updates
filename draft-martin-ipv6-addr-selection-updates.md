@@ -43,8 +43,8 @@ This document updates RFC 6724 with three related improvements to
 IPv6 destination address selection. The updates allow observed or recent
 communication performance to influence ordering, incorporate likely
 source/destination address pairs when sorting candidates, and let
-operators preserve DNS load-balancing order where Rule 9 would otherwise
-override it. All three enhancements are OPTIONAL, off by default, and
+ISP and enterprise operators preserve DNS load-balancing order where
+Rule 9 would otherwise override it. All three enhancements are OPTIONAL, off by default, and
 intended to be implementable internally by `getaddrinfo()` or an
 equivalent system mechanism, without changing the existing API or
 requiring application source-code changes.
@@ -235,10 +235,8 @@ This document has no IANA actions.
 
 # Acknowledgements
 
-XiPeng Xiao proposed co-authoring this focused [@!RFC6724] update.
-Brian Carpenter's getapr work informed the source/destination pair
-consideration. Discussion on the v6ops mailing list, including threads
-around Enhanced Dual Stack, helped shape the scope.
+Discussion on the v6ops mailing list, including threads around Enhanced
+Dual Stack, helped shape the scope.
 
 <reference anchor="EDS" target="https://datatracker.ietf.org/doc/html/draft-xiao-v6ops-eds-01">
   <front>
