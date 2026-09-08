@@ -22,8 +22,8 @@ Abstract
    incorporate likely source/destination address pairs when sorting
    candidates, and let ISP and enterprise operators preserve DNS load-
    balancing order where Rule 9 would otherwise override it.  The
-   updates are intended to be implementable within existing host
-   networking mechanisms without requiring changes to existing
+   updates are intended to be implementable inside getaddrinfo() or an
+   equivalent system mechanism, without requiring changes to existing
    application-facing socket APIs.
 
 About This Document
@@ -144,10 +144,10 @@ Internet-Draft         ipv6-addr-selection-updates        September 2026
 
 1.2.  Motivation
 
-   RFC 6724 defines the default destination address selection algorithm
-   for ordering IPv6 and IPv4 destination candidates.  Implementations
-   may realize this behavior in an operating system, platform, runtime,
-   networking library, or application.  The rules provide useful
+   Applications commonly use getaddrinfo() [POSIX] [RFC3493] to obtain
+   an ordered list of destination addresses.  [RFC6724] defines the
+   default destination address selection algorithm that implementations
+   apply when sorting that list.  The rules provide useful
    interoperability and policy control on the global Internet, but three
    operational gaps have emerged:
 
@@ -194,11 +194,11 @@ Internet-Draft         ipv6-addr-selection-updates        September 2026
    another, so current [RFC6724] behavior is preserved without
    deliberate administrative input.
 
-   The enhancements SHOULD be implementable within existing host
-   networking mechanisms.  This document does not require changes to
-   existing application-facing socket APIs or application source code.
-   Experimental evidence for address-pair-aware ordering appears in
-   [GET-ADDR-PAIRS].
+   The enhancements SHOULD be implementable inside getaddrinfo() or an
+   equivalent system resolver mechanism.  This document does not require
+   changes to existing application-facing socket APIs or application
+   source code.  Experimental evidence for address-pair-aware ordering
+   appears in [GET-ADDR-PAIRS].
 
 2.  Terminology
 
@@ -356,8 +356,9 @@ Internet-Draft         ipv6-addr-selection-updates        September 2026
    destination, not only the destination in isolation.  Ordering SHOULD
    prefer source/destination pairs that are more likely to succeed or
    perform well.  This update aligns with the implementation
-   architecture described in [RFC6724].  [GET-ADDR-PAIRS] demonstrates a
-   prototype approach.
+   architecture described in [RFC6724], where getaddrinfo() may obtain
+   source-address information when sorting destinations.
+   [GET-ADDR-PAIRS] demonstrates a prototype approach.
 
    |  TODO: Normative text for pair evaluation and interaction with
    |  existing Rules 2, 5, and 9.
@@ -385,7 +386,6 @@ Internet-Draft         ipv6-addr-selection-updates        September 2026
    implementation MUST preserve the order received from the name-
    resolution step (for example, the order of A or AAAA records in the
    DNS response) among those same-family candidates, rather than
-   reordering them by longest matching prefix.  This section does not
 
 
 
@@ -394,6 +394,7 @@ Martin, et al.            Expires 12 March 2027                 [Page 7]
 Internet-Draft         ipv6-addr-selection-updates        September 2026
 
 
+   reordering them by longest matching prefix.  This section does not
    introduce a new within-family sort order; it only prevents Rule 9
    from overriding DNS response order for configured destinations.
    Configuration mechanisms MAY include a policy table, /etc/gai.conf,
@@ -402,7 +403,7 @@ Internet-Draft         ipv6-addr-selection-updates        September 2026
 
 4.  Implementation and Deployment Considerations
 
-   Implementations that apply these updates inside getaddrinfo()
+   Implementations that apply these updates inside getaddrinfo() [POSIX]
    [RFC3493] or an equivalent system mechanism preserve compatibility
    with existing applications that use the returned address ordering.
    For connectivity-informed selection, the implementation needs a
@@ -433,7 +434,6 @@ Internet-Draft         ipv6-addr-selection-updates        September 2026
    hosts and time by network context, destination or source prefix,
    service, failure type, or other operator-defined groupings.  For
    example:
-
 
 
 
@@ -550,8 +550,8 @@ Internet-Draft         ipv6-addr-selection-updates        September 2026
               <https://datatracker.ietf.org/doc/draft-ietf-happy-
               happyeyeballs-v3/>.
 
-   [RFC1794]  Brisco, T., "DNS Support for Load Balancing", April 1995,
-              <https://www.rfc-editor.org/info/rfc1794>.
+
+
 
 
 
@@ -561,6 +561,16 @@ Martin, et al.            Expires 12 March 2027                [Page 10]
 
 Internet-Draft         ipv6-addr-selection-updates        September 2026
 
+
+   [POSIX]    IEEE and The Open Group, "IEEE/Open Group Standard for
+              Information Technology -- Portable Operating System
+              Interface (POSIX(TM)) Base Specifications, Issue 8", IEEE
+              Std 1003.1-2024, 2024,
+              <https://pubs.opengroup.org/onlinepubs/9799919799/
+              functions/getaddrinfo.html>.
+
+   [RFC1794]  Brisco, T., "DNS Support for Load Balancing", April 1995,
+              <https://www.rfc-editor.org/info/rfc1794>.
 
    [RFC3493]  Gilligan, R., Thomson, S., Bound, J., McCann, J., and W.
               Stevens, "Basic Socket Interface Extensions for IPv6",
@@ -590,16 +600,6 @@ Authors' Addresses
    Brian E. Carpenter
    University of Auckland
    Email: brian.e.carpenter@gmail.com
-
-
-
-
-
-
-
-
-
-
 
 
 

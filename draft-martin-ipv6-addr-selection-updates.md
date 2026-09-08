@@ -41,9 +41,9 @@ address selection. The updates allow recent IPv6 connection or service
 failures to influence IPv6/IPv4 ordering, incorporate likely
 source/destination address pairs when sorting candidates, and let ISP and
 enterprise operators preserve DNS load-balancing order where Rule 9 would
-otherwise override it. The updates are intended to be implementable within
-existing host networking mechanisms without requiring changes to existing
-application-facing socket APIs.
+otherwise override it. The updates are intended to be implementable inside
+`getaddrinfo()` or an equivalent system mechanism, without requiring changes
+to existing application-facing socket APIs.
 
 .# About This Document
 
@@ -87,7 +87,11 @@ they appear in all capitals, as shown here.
 
 ## Motivation
 
-RFC 6724 defines the default destination address selection algorithm for ordering IPv6 and IPv4 destination candidates. Implementations may realize this behavior in an operating system, platform, runtime, networking library, or application. The rules provide useful interoperability and policy control on the global Internet, but three operational gaps have emerged:
+Applications commonly use `getaddrinfo()` [@?POSIX] [@?RFC3493] to obtain an
+ordered list of destination addresses. [@!RFC6724] defines the default
+destination address selection algorithm that implementations apply when sorting
+that list. The rules provide useful interoperability and policy control on the
+global Internet, but three operational gaps have emerged:
 
 * **Connectivity:** Static precedence can continue to prefer IPv6 after an IPv6
   connection or service-establishment attempt has recently failed. Happy
@@ -120,10 +124,10 @@ configurable. Implementations **MUST NOT** enable any of them by default, and
 enabling one enhancement **MUST NOT** implicitly enable another, so current
 [@!RFC6724] behavior is preserved without deliberate administrative input.
 
-The enhancements **SHOULD** be implementable within existing host networking
-mechanisms. This document does not require changes to existing application-facing
-socket APIs or application source code. Experimental evidence for
-address-pair-aware ordering appears in [@?GET-ADDR-PAIRS].
+The enhancements **SHOULD** be implementable inside `getaddrinfo()` or an
+equivalent system resolver mechanism. This document does not require changes to
+existing application-facing socket APIs or application source code. Experimental
+evidence for address-pair-aware ordering appears in [@?GET-ADDR-PAIRS].
 
 # Terminology
 
@@ -225,7 +229,8 @@ likely source address that would be used for each candidate destination,
 not only the destination in isolation. Ordering SHOULD prefer
 source/destination pairs that are more likely to succeed or perform well.
 This update aligns with the implementation architecture described in
-[@!RFC6724]. [@?GET-ADDR-PAIRS] demonstrates a prototype approach.
+[@!RFC6724], where `getaddrinfo()` may obtain source-address information when
+sorting destinations. [@?GET-ADDR-PAIRS] demonstrates a prototype approach.
 
 > TODO: Normative text for pair evaluation and interaction with existing
 > Rules 2, 5, and 9.
@@ -236,7 +241,8 @@ Operators who use DNS-based load balancing [@?RFC1794]---for example,
 multiple A or AAAA records whose order is rotated by the authoritative
 server---expect clients to try addresses in the order returned by DNS.
 Rule 9 reorders those candidates by longest matching prefix, which can
-concentrate traffic on one backend and undermine the operator's load-spreading intent. DNS operators and routing-oriented guidance have
+concentrate traffic on one backend and undermine the operator's
+load-spreading intent. DNS operators and routing-oriented guidance have
 historically given conflicting advice on this point; this section
 standardizes operator-controlled behavior.
 
@@ -250,14 +256,20 @@ the same address family, and a candidate destination address falls within a
 configured range, the implementation MUST preserve the order received from
 the name-resolution step (for example, the order of A or AAAA records in the
 DNS response) among those same-family candidates, rather than reordering them
-by longest matching prefix. This section does not introduce a new within-family sort order; it only prevents Rule 9 from overriding DNS response
+by longest matching prefix. This section does not introduce a new within-family
+sort order; it only prevents Rule 9 from overriding DNS response
 order for configured destinations. Configuration mechanisms MAY include a
 policy table, `/etc/gai.conf`, or an equivalent system resolver setting; no
 application changes are required.
 
 # Implementation and Deployment Considerations
 
-Implementations that apply these updates inside `getaddrinfo()` [@?RFC3493] or an equivalent system mechanism preserve compatibility with existing applications that use the returned address ordering. For connectivity-informed selection, the implementation needs a mechanism to retain recent connection or service-establishment failures for later use by destination selection; no new application-facing API is required.
+Implementations that apply these updates inside `getaddrinfo()` [@?POSIX]
+[@?RFC3493] or an equivalent system mechanism preserve compatibility with
+existing applications that use the returned address ordering. For connectivity-informed
+selection, the implementation needs a mechanism to retain recent connection or
+service-establishment failures for later use by destination selection; no new
+application-facing API is required.
 
 Operators MAY use existing policy mechanisms such as `/etc/gai.conf` on
 glibc-based systems to influence precedence; however, such files alone do not
@@ -335,6 +347,16 @@ Dual Stack, helped shape the scope.
     </author>
     <date year="2026" month="July" day="4"/>
   </front>
+</reference>
+<reference anchor="POSIX" target="https://pubs.opengroup.org/onlinepubs/9799919799/functions/getaddrinfo.html">
+  <front>
+    <title>IEEE/Open Group Standard for Information Technology -- Portable Operating System Interface (POSIX(TM)) Base Specifications, Issue 8</title>
+    <author>
+      <organization>IEEE and The Open Group</organization>
+    </author>
+    <date year="2024"/>
+  </front>
+  <seriesInfo name="IEEE Std" value="1003.1-2024"/>
 </reference>
 <reference anchor="RFC1794" target="https://www.rfc-editor.org/info/rfc1794">
   <front>

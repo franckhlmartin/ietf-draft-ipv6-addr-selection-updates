@@ -14,9 +14,9 @@ address selection. The updates allow recent IPv6 connection or service
 failures to influence IPv6/IPv4 ordering, incorporate likely
 source/destination address pairs when sorting candidates, and let ISP and
 enterprise operators preserve DNS load-balancing order where Rule 9 would
-otherwise override it. The updates are intended to be implementable within
-existing host networking mechanisms without requiring changes to existing
-application-facing socket APIs. 
+otherwise override it. The updates are intended to be implementable inside
+ getaddrinfo()  or an equivalent system mechanism, without requiring changes
+to existing application-facing socket APIs. 
     " name="description">
 <meta content="xml2rfc 3.34.0" name="generator">
 <meta content="IPv6" name="keyword">
@@ -1280,9 +1280,9 @@ address selection. The updates allow recent IPv6 connection or service
 failures to influence IPv6/IPv4 ordering, incorporate likely
 source/destination address pairs when sorting candidates, and let ISP and
 enterprise operators preserve DNS load-balancing order where Rule 9 would
-otherwise override it. The updates are intended to be implementable within
-existing host networking mechanisms without requiring changes to existing
-application-facing socket APIs.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+otherwise override it. The updates are intended to be implementable inside
+<code>getaddrinfo()</code> or an equivalent system mechanism, without requiring changes
+to existing application-facing socket APIs.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 </section>
 <section class="note" id="section-note.1">
       <h2 id="name-about-this-document">
@@ -1445,7 +1445,11 @@ they appear in all capitals, as shown here.<a href="#section-1.1-1" class="pilcr
         <h3 id="name-motivation">
 <a href="#section-1.2" class="section-number selfRef">1.2. </a><a href="#name-motivation" class="section-name selfRef">Motivation</a>
         </h3>
-<p id="section-1.2-1">RFC 6724 defines the default destination address selection algorithm for ordering IPv6 and IPv4 destination candidates. Implementations may realize this behavior in an operating system, platform, runtime, networking library, or application. The rules provide useful interoperability and policy control on the global Internet, but three operational gaps have emerged:<a href="#section-1.2-1" class="pilcrow">¶</a></p>
+<p id="section-1.2-1">Applications commonly use <code>getaddrinfo()</code> <span>[<a href="#POSIX" class="cite xref">POSIX</a>]</span> <span>[<a href="#RFC3493" class="cite xref">RFC3493</a>]</span> to obtain an
+ordered list of destination addresses. <span>[<a href="#RFC6724" class="cite xref">RFC6724</a>]</span> defines the default
+destination address selection algorithm that implementations apply when sorting
+that list. The rules provide useful interoperability and policy control on the
+global Internet, but three operational gaps have emerged:<a href="#section-1.2-1" class="pilcrow">¶</a></p>
 <ul class="compact">
 <li class="compact" id="section-1.2-2.1">
             <strong>Connectivity:</strong> Static precedence can continue to prefer IPv6 after an IPv6
@@ -1492,10 +1496,10 @@ destination ordering.<a href="#section-1.3-1" class="pilcrow">¶</a></p>
 configurable. Implementations <span class="bcp14">MUST NOT</span> enable any of them by default, and
 enabling one enhancement <span class="bcp14">MUST NOT</span> implicitly enable another, so current
 <span>[<a href="#RFC6724" class="cite xref">RFC6724</a>]</span> behavior is preserved without deliberate administrative input.<a href="#section-1.4-1" class="pilcrow">¶</a></p>
-<p id="section-1.4-2">The enhancements <span class="bcp14">SHOULD</span> be implementable within existing host networking
-mechanisms. This document does not require changes to existing application-facing
-socket APIs or application source code. Experimental evidence for
-address-pair-aware ordering appears in <span>[<a href="#GET-ADDR-PAIRS" class="cite xref">GET-ADDR-PAIRS</a>]</span>.<a href="#section-1.4-2" class="pilcrow">¶</a></p>
+<p id="section-1.4-2">The enhancements <span class="bcp14">SHOULD</span> be implementable inside <code>getaddrinfo()</code> or an
+equivalent system resolver mechanism. This document does not require changes to
+existing application-facing socket APIs or application source code. Experimental
+evidence for address-pair-aware ordering appears in <span>[<a href="#GET-ADDR-PAIRS" class="cite xref">GET-ADDR-PAIRS</a>]</span>.<a href="#section-1.4-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1627,7 +1631,8 @@ likely source address that would be used for each candidate destination,
 not only the destination in isolation. Ordering SHOULD prefer
 source/destination pairs that are more likely to succeed or perform well.
 This update aligns with the implementation architecture described in
-<span>[<a href="#RFC6724" class="cite xref">RFC6724</a>]</span>. <span>[<a href="#GET-ADDR-PAIRS" class="cite xref">GET-ADDR-PAIRS</a>]</span> demonstrates a prototype approach.<a href="#section-3.2-1" class="pilcrow">¶</a></p>
+<span>[<a href="#RFC6724" class="cite xref">RFC6724</a>]</span>, where <code>getaddrinfo()</code> may obtain source-address information when
+sorting destinations. <span>[<a href="#GET-ADDR-PAIRS" class="cite xref">GET-ADDR-PAIRS</a>]</span> demonstrates a prototype approach.<a href="#section-3.2-1" class="pilcrow">¶</a></p>
 <blockquote id="section-3.2-2">
           <p id="section-3.2-2.1">TODO: Normative text for pair evaluation and interaction with existing
 Rules 2, 5, and 9.<a href="#section-3.2-2.1" class="pilcrow">¶</a></p>
@@ -1643,7 +1648,8 @@ Rules 2, 5, and 9.<a href="#section-3.2-2.1" class="pilcrow">¶</a></p>
 multiple A or AAAA records whose order is rotated by the authoritative
 server---expect clients to try addresses in the order returned by DNS.
 Rule 9 reorders those candidates by longest matching prefix, which can
-concentrate traffic on one backend and undermine the operator's load-spreading intent. DNS operators and routing-oriented guidance have
+concentrate traffic on one backend and undermine the operator's
+load-spreading intent. DNS operators and routing-oriented guidance have
 historically given conflicting advice on this point; this section
 standardizes operator-controlled behavior.<a href="#section-3.3-1" class="pilcrow">¶</a></p>
 <p id="section-3.3-2">Implementations MUST support administrative configuration of one or more
@@ -1656,7 +1662,8 @@ the same address family, and a candidate destination address falls within a
 configured range, the implementation MUST preserve the order received from
 the name-resolution step (for example, the order of A or AAAA records in the
 DNS response) among those same-family candidates, rather than reordering them
-by longest matching prefix. This section does not introduce a new within-family sort order; it only prevents Rule 9 from overriding DNS response
+by longest matching prefix. This section does not introduce a new within-family
+sort order; it only prevents Rule 9 from overriding DNS response
 order for configured destinations. Configuration mechanisms MAY include a
 policy table, <code>/etc/gai.conf</code>, or an equivalent system resolver setting; no
 application changes are required.<a href="#section-3.3-2" class="pilcrow">¶</a></p>
@@ -1669,7 +1676,12 @@ application changes are required.<a href="#section-3.3-2" class="pilcrow">¶</a>
       <h2 id="name-implementation-and-deployme">
 <a href="#section-4" class="section-number selfRef">4. </a><a href="#name-implementation-and-deployme" class="section-name selfRef">Implementation and Deployment Considerations</a>
       </h2>
-<p id="section-4-1">Implementations that apply these updates inside <code>getaddrinfo()</code> <span>[<a href="#RFC3493" class="cite xref">RFC3493</a>]</span> or an equivalent system mechanism preserve compatibility with existing applications that use the returned address ordering. For connectivity-informed selection, the implementation needs a mechanism to retain recent connection or service-establishment failures for later use by destination selection; no new application-facing API is required.<a href="#section-4-1" class="pilcrow">¶</a></p>
+<p id="section-4-1">Implementations that apply these updates inside <code>getaddrinfo()</code> <span>[<a href="#POSIX" class="cite xref">POSIX</a>]</span>
+        <span>[<a href="#RFC3493" class="cite xref">RFC3493</a>]</span> or an equivalent system mechanism preserve compatibility with
+existing applications that use the returned address ordering. For connectivity-informed
+selection, the implementation needs a mechanism to retain recent connection or
+service-establishment failures for later use by destination selection; no new
+application-facing API is required.<a href="#section-4-1" class="pilcrow">¶</a></p>
 <p id="section-4-2">Operators MAY use existing policy mechanisms such as <code>/etc/gai.conf</code> on
 glibc-based systems to influence precedence; however, such files alone do not
 fully disable Rule 9 today. The connectivity-informed enhancement does not
@@ -1811,6 +1823,10 @@ Dual Stack, helped shape the scope.<a href="#section-7-1" class="pilcrow">¶</a>
 <dt id="HAPPY-HEV3">[HAPPY-HEV3]</dt>
       <dd>
 <span class="refAuthor">Pauly, T.</span>, <span class="refAuthor">Schinazi, D.</span>, <span class="refAuthor">Jaju, N.</span>, and <span class="refAuthor">K. Ishibashi</span>, <span class="refTitle">"Happy Eyeballs Version 3: Better Connectivity Using Concurrency"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-happy-happyeyeballs-v3-04</span>, <time datetime="2026-07-02" class="refDate">2 July 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/draft-ietf-happy-happyeyeballs-v3/">https://datatracker.ietf.org/doc/draft-ietf-happy-happyeyeballs-v3/</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="POSIX">[POSIX]</dt>
+      <dd>
+<span class="refAuthor">IEEE and The Open Group</span>, <span class="refTitle">"IEEE/Open Group Standard for Information Technology -- Portable Operating System Interface (POSIX(TM)) Base Specifications, Issue 8"</span>, <span class="seriesInfo">IEEE Std 1003.1-2024</span>, <time datetime="2024" class="refDate">2024</time>, <span>&lt;<a href="https://pubs.opengroup.org/onlinepubs/9799919799/functions/getaddrinfo.html">https://pubs.opengroup.org/onlinepubs/9799919799/functions/getaddrinfo.html</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC1794">[RFC1794]</dt>
       <dd>

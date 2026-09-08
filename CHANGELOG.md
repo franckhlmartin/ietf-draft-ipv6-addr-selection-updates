@@ -5,6 +5,11 @@ Formatting-only edits are omitted unless they affect published semantics.
 
 ## Unreleased
 
+- **getaddrinfo() / POSIX:** Restore `getaddrinfo()` in the Abstract, Motivation,
+  Design Principle, address-pair section, and Implementation Considerations as the
+  standard host API (with "or equivalent"), and add informative [POSIX]
+  (IEEE Std 1003.1-2024) alongside [RFC3493].
+
 - **Connectivity-informed selection (§3.1):** Replace performance-aware placeholder with
   normative update to Rule 6 ("Prefer higher precedence unless recently failed"); define
   recent-failure records (network context, destination, source, service), 10-minute

@@ -25,9 +25,9 @@ address selection. The updates allow recent IPv6 connection or service
 failures to influence IPv6/IPv4 ordering, incorporate likely
 source/destination address pairs when sorting candidates, and let ISP and
 enterprise operators preserve DNS load-balancing order where Rule 9 would
-otherwise override it. The updates are intended to be implementable within
-existing host networking mechanisms without requiring changes to existing
-application-facing socket APIs.</t>
+otherwise override it. The updates are intended to be implementable inside
+<tt>getaddrinfo()</tt> or an equivalent system mechanism, without requiring changes
+to existing application-facing socket APIs.</t>
 </abstract>
 
 <note><name>About This Document</name>
@@ -70,7 +70,11 @@ they appear in all capitals, as shown here.</t>
 </section>
 
 <section anchor="motivation"><name>Motivation</name>
-<t>RFC 6724 defines the default destination address selection algorithm for ordering IPv6 and IPv4 destination candidates. Implementations may realize this behavior in an operating system, platform, runtime, networking library, or application. The rules provide useful interoperability and policy control on the global Internet, but three operational gaps have emerged:</t>
+<t>Applications commonly use <tt>getaddrinfo()</tt> <xref target="POSIX"></xref> <xref target="RFC3493"></xref> to obtain an
+ordered list of destination addresses. <xref target="RFC6724"></xref> defines the default
+destination address selection algorithm that implementations apply when sorting
+that list. The rules provide useful interoperability and policy control on the
+global Internet, but three operational gaps have emerged:</t>
 
 <ul spacing="compact">
 <li><strong>Connectivity:</strong> Static precedence can continue to prefer IPv6 after an IPv6
@@ -104,10 +108,10 @@ destination ordering.</t>
 configurable. Implementations <bcp14>MUST NOT</bcp14> enable any of them by default, and
 enabling one enhancement <bcp14>MUST NOT</bcp14> implicitly enable another, so current
 <xref target="RFC6724"></xref> behavior is preserved without deliberate administrative input.</t>
-<t>The enhancements <bcp14>SHOULD</bcp14> be implementable within existing host networking
-mechanisms. This document does not require changes to existing application-facing
-socket APIs or application source code. Experimental evidence for
-address-pair-aware ordering appears in <xref target="GET-ADDR-PAIRS"></xref>.</t>
+<t>The enhancements <bcp14>SHOULD</bcp14> be implementable inside <tt>getaddrinfo()</tt> or an
+equivalent system resolver mechanism. This document does not require changes to
+existing application-facing socket APIs or application source code. Experimental
+evidence for address-pair-aware ordering appears in <xref target="GET-ADDR-PAIRS"></xref>.</t>
 </section>
 </section>
 
@@ -225,7 +229,8 @@ likely source address that would be used for each candidate destination,
 not only the destination in isolation. Ordering SHOULD prefer
 source/destination pairs that are more likely to succeed or perform well.
 This update aligns with the implementation architecture described in
-<xref target="RFC6724"></xref>. <xref target="GET-ADDR-PAIRS"></xref> demonstrates a prototype approach.</t>
+<xref target="RFC6724"></xref>, where <tt>getaddrinfo()</tt> may obtain source-address information when
+sorting destinations. <xref target="GET-ADDR-PAIRS"></xref> demonstrates a prototype approach.</t>
 <blockquote><t>TODO: Normative text for pair evaluation and interaction with existing
 Rules 2, 5, and 9.</t>
 </blockquote></section>
@@ -235,7 +240,8 @@ Rules 2, 5, and 9.</t>
 multiple A or AAAA records whose order is rotated by the authoritative
 server---expect clients to try addresses in the order returned by DNS.
 Rule 9 reorders those candidates by longest matching prefix, which can
-concentrate traffic on one backend and undermine the operator's load-spreading intent. DNS operators and routing-oriented guidance have
+concentrate traffic on one backend and undermine the operator's
+load-spreading intent. DNS operators and routing-oriented guidance have
 historically given conflicting advice on this point; this section
 standardizes operator-controlled behavior.</t>
 <t>Implementations MUST support administrative configuration of one or more
@@ -248,7 +254,8 @@ the same address family, and a candidate destination address falls within a
 configured range, the implementation MUST preserve the order received from
 the name-resolution step (for example, the order of A or AAAA records in the
 DNS response) among those same-family candidates, rather than reordering them
-by longest matching prefix. This section does not introduce a new within-family sort order; it only prevents Rule 9 from overriding DNS response
+by longest matching prefix. This section does not introduce a new within-family
+sort order; it only prevents Rule 9 from overriding DNS response
 order for configured destinations. Configuration mechanisms MAY include a
 policy table, <tt>/etc/gai.conf</tt>, or an equivalent system resolver setting; no
 application changes are required.</t>
@@ -256,7 +263,12 @@ application changes are required.</t>
 </section>
 
 <section anchor="implementation-and-deployment-considerations"><name>Implementation and Deployment Considerations</name>
-<t>Implementations that apply these updates inside <tt>getaddrinfo()</tt> <xref target="RFC3493"></xref> or an equivalent system mechanism preserve compatibility with existing applications that use the returned address ordering. For connectivity-informed selection, the implementation needs a mechanism to retain recent connection or service-establishment failures for later use by destination selection; no new application-facing API is required.</t>
+<t>Implementations that apply these updates inside <tt>getaddrinfo()</tt> <xref target="POSIX"></xref>
+<xref target="RFC3493"></xref> or an equivalent system mechanism preserve compatibility with
+existing applications that use the returned address ordering. For connectivity-informed
+selection, the implementation needs a mechanism to retain recent connection or
+service-establishment failures for later use by destination selection; no new
+application-facing API is required.</t>
 <t>Operators MAY use existing policy mechanisms such as <tt>/etc/gai.conf</tt> on
 glibc-based systems to influence precedence; however, such files alone do not
 fully disable Rule 9 today. The connectivity-informed enhancement does not
@@ -387,6 +399,16 @@ Dual Stack, helped shape the scope.</t>
     <date year="2026" month="July" day="2"></date>
   </front>
   <seriesInfo name="Internet-Draft" value="draft-ietf-happy-happyeyeballs-v3-04"></seriesInfo>
+</reference>
+<reference anchor="POSIX" target="https://pubs.opengroup.org/onlinepubs/9799919799/functions/getaddrinfo.html">
+  <front>
+    <title>IEEE/Open Group Standard for Information Technology -- Portable Operating System Interface (POSIX(TM)) Base Specifications, Issue 8</title>
+    <author>
+      <organization>IEEE and The Open Group</organization>
+    </author>
+    <date year="2024"></date>
+  </front>
+  <seriesInfo name="IEEE Std" value="1003.1-2024"></seriesInfo>
 </reference>
 <reference anchor="RFC1794" target="https://www.rfc-editor.org/info/rfc1794">
   <front>
