@@ -5,13 +5,12 @@ ipr = "trust200902"
 updates = [6724]
 keyword = ["IPv6", "RFC6724", "address selection", "getaddrinfo", "DNS load balancing"]
 
-date = 2026-08-29
+date = 2026-09-08
 
 [seriesInfo]
 name = "Internet-Draft"
 value = "draft-martin-ipv6-addr-selection-updates-00"
 status = "standard"
-
 [[author]]
 initials = "F."
 surname = "Martin"
@@ -27,7 +26,6 @@ fullname = "XiPeng Xiao"
 organization = "Huawei Technologies Dusseldorf"
   [author.address]
   email = "xipengxiao@gmail.com"
-
 [[author]]
 initials = "B."
 surname = "Carpenter"
@@ -38,16 +36,14 @@ organization = "University of Auckland"
 %%%
 
 .# Abstract
-
-This document updates RFC 6724 with three related improvements to
-IPv6 destination address selection. The updates allow observed or recent
-communication performance to influence ordering, incorporate likely
-source/destination address pairs when sorting candidates, and let
-ISP and enterprise operators preserve DNS load-balancing order where
-Rule 9 would otherwise override it. All three enhancements are OPTIONAL, off by default, and
-intended to be implementable internally by `getaddrinfo()` or an
-equivalent system mechanism, without changing the existing API or
-requiring application source-code changes.
+This document updates RFC 6724 with three improvements to IPv6 destination
+address selection. The updates allow recent IPv6 connection or service
+failures to influence IPv6/IPv4 ordering, incorporate likely
+source/destination address pairs when sorting candidates, and let ISP and
+enterprise operators preserve DNS load-balancing order where Rule 9 would
+otherwise override it. The updates are intended to be implementable within
+existing host networking mechanisms without requiring changes to existing
+application-facing socket APIs.
 
 .# About This Document
 
@@ -57,7 +53,6 @@ The latest revision of this draft can be found at
 https://github.com/franckhlmartin/ietf-draft-ipv6-addr-selection-updates/.
 Status information for this document may be found at
 https://datatracker.ietf.org/doc/draft-martin-ipv6-addr-selection-updates/.
-
 Discussion of this document takes place on the v6ops Working Group
 mailing list (mailto:v6ops@ietf.org), which is archived at
 https://mailarchive.ietf.org/arch/browse/v6ops/. Subscribe at
@@ -68,20 +63,19 @@ Source for this draft and an issue tracker can be found at
 https://github.com/franckhlmartin/ietf-draft-ipv6-addr-selection-updates.
 
 {mainmatter}
-
 # Introduction
 
-[@!RFC6724] Section 6 notes that Rules 9 and 10 MAY be superseded when an
-implementation has other means of sorting destination addresses---for
-example, when it somehow knows which destination addresses will result in
-the "best" communications performance. The purpose of this document is to
-better qualify (based on operational experience) when an implementation MAY supersede those rules and how,
-so that behavior is standardized rather than left to ad hoc local
-heuristics. This document does not limit operators or implementations:
-if other means of sorting produce better results, they remain permitted
-and need not be confined to the mechanisms specified here. The
-implementations described in this document are believed to benefit
-operators in their IPv6 deployments and IPv4 retirement.
+[@!RFC6724] defines default source and destination address selection for IPv6
+and dual-stack hosts. Operational experience has identified cases where
+additional information available to a host or operator can improve destination
+ordering. In particular, Section 10.3.1 of [@!RFC6724] notes that a host with
+working IPv4 connectivity but broken IPv6 connectivity can experience unwanted
+timeouts because the default policy normally prefers IPv6.
+
+This document specifies three updates addressing recent IPv6 connection or
+service failures, source/destination address-pair considerations, and DNS-based
+load balancing. The implementations described in this document are believed to
+benefit operators in their IPv6 deployments and IPv4 retirement.
 
 ## Requirements Language
 
@@ -93,18 +87,13 @@ they appear in all capitals, as shown here.
 
 ## Motivation
 
-Applications commonly use `getaddrinfo()` [@!RFC3493] to obtain an ordered
-list of destination addresses. [@!RFC6724] defines the default destination
-address selection algorithm that implementations such as glibc apply when
-sorting that list. The rules provide useful interoperability and policy
-control on the global Internet, but three operational gaps have emerged:
+RFC 6724 defines the default destination address selection algorithm for ordering IPv6 and IPv4 destination candidates. Implementations may realize this behavior in an operating system, platform, runtime, networking library, or application. The rules provide useful interoperability and policy control on the global Internet, but three operational gaps have emerged:
 
-* **Performance:** Static rules do not reflect observed or recent
-  communication performance on a particular host, network, destination,
-  interface, or time period. Some of these gaps are already addressed at the
-  application layer by connection racing, as specified in Happy Eyeballs
-  [@?RFC8305], which tries multiple destination addresses concurrently
-  rather than relying solely on resolver ordering.
+* **Connectivity:** Static precedence can continue to prefer IPv6 after an IPv6
+  connection or service-establishment attempt has recently failed. Happy
+  Eyeballs [@?RFC8305] reduces the impact for applications that race IPv6 and
+  IPv4 attempts, but other applications can repeatedly experience the same
+  failure or delay.
 * **Address pairs:** Sorting destinations without considering the likely
   source/destination pair can yield suboptimal or incorrect connectivity,
   especially when multiple source addresses are available.
@@ -126,15 +115,15 @@ destination ordering.
 
 ## Design Principle
 
-All three enhancements are OPTIONAL. Implementations MUST NOT enable them
-by default; each enhancement MUST remain disabled until an operator
-explicitly configures it, so current [@!RFC6724] behavior is preserved
-without deliberate administrative input.
+The three enhancements are **OPTIONAL**, independent, and individually
+configurable. Implementations **MUST NOT** enable any of them by default, and
+enabling one enhancement **MUST NOT** implicitly enable another, so current
+[@!RFC6724] behavior is preserved without deliberate administrative input.
 
-All three enhancements SHOULD be implementable internally by `getaddrinfo()`
-or the equivalent system resolver mechanism. Applications SHOULD NOT need
-API changes or source-code modifications to benefit. Experimental evidence
-for address-pair-aware ordering appears in [@?GET-ADDR-PAIRS].
+The enhancements **SHOULD** be implementable within existing host networking
+mechanisms. This document does not require changes to existing application-facing
+socket APIs or application source code. Experimental evidence for
+address-pair-aware ordering appears in [@?GET-ADDR-PAIRS].
 
 # Terminology
 
@@ -146,22 +135,88 @@ as defined in [@!RFC6724].
 and a candidate destination address used to evaluate connectivity or
 ordering for a given communication attempt.
 
+**Recent-failure state:** Host-local state recording a recent IPv6 connection
+or service-establishment failure that can be consulted by destination address
+selection.
+
+**Network context:** Information identifying the network environment in which
+a connection attempt is made, such as the outgoing interface, network
+attachment, VPN, or equivalent implementation-specific context.
+
+**Service:** The transport and port and, when available, higher-layer protocol
+or service-binding information associated with an attempt. For example, the
+service can be represented as `TCP/443`, `HTTPS/TCP/443`, or
+`HTTPS/h3/QUIC/443`. Happy Eyeballs Version 3 [@?HAPPY-HEV3] similarly extends
+connection establishment beyond transport-only information when such service
+information is available.
+
 # Updates to RFC6724
 
 This section specifies updates to destination address selection in
-[@!RFC6724]. Exact rule numbering and ordering relative to existing
-Rules 1--10 are for further editor and working group discussion.
+[@!RFC6724].
 
-## Performance-Aware Destination Selection {#performance-aware}
+## Connectivity-Informed Destination Selection {#connectivity-informed}
 
-Implementations MAY use observed or recent communication performance
-when ordering destination addresses that are otherwise equal under
-Rules 1--8. When applied, this behavior SHOULD integrate with or
-replace the tie-breaking role of Rules 9 and 10 for affected candidates.
+Connectivity-informed destination address selection is enabled by updating
+Rule 6 of [@!RFC6724] from "Prefer higher precedence" to "Prefer higher
+precedence unless recently failed".
 
-> TODO: Specify ordering relative to Rules 9 and 10; define what
-> "observed or recent performance" means (latency, loss, success rate,
-> scope, and retention period).
+The updated rule is:
+
+> **Rule 6: Prefer higher precedence unless recently failed.**
+>
+> When exactly one of DA and DB is an IPv6 destination and the other is an
+> IPv4 destination, if applicable recent-failure state exists for the IPv6
+> destination, prefer the IPv4 destination.
+>
+> Otherwise, if Precedence(DA) > Precedence(DB), then prefer DA. Similarly, if
+> Precedence(DA) < Precedence(DB), then prefer DB.
+
+When this enhancement is enabled, the component that determines that an IPv6
+connection or service-establishment attempt has failed creates or refreshes a
+recent-failure record. The logical record contains the following fields:
+
+| Field | Example |
+|---|---|
+| Network context | Corp-WiFi-A |
+| IPv6 destination | 2001:db8:1234:5678::42 |
+| IPv6 source | 2001:db8:1111::123 |
+| Service | TCP/443 |
+| Failure type | timeout |
+| Timestamp | 2026-09-07T14:32:18+02:00 |
+
+The first four fields identify the scope to which the observation applies. An
+entry is applicable when its network context, IPv6 destination, IPv6 source,
+and service match the current candidate as far as those fields are known. The
+`IPv6 source` and `Service` fields **SHOULD** be recorded when available. The
+Service field can contain only transport-level information or can include
+higher-layer protocol or service-binding information when available.
+
+A failed attempt to establish a usable instance of the identified service,
+such as a timeout, unreachable indication, connection refusal, or an
+applicable higher-layer establishment failure, creates or refreshes
+recent-failure state. Local API or resource errors unrelated to the attempted
+IPv6 communication do not. No active probing or measurement of RTT, packet
+loss, throughput, or other performance statistics is required.
+
+Recent-failure state **SHOULD** expire 10 minutes after the most recent
+applicable failure. This interval follows the stateful Happy Eyeballs guidance
+in Section 4.2 of [@?RFC6555], which recommends retrying a failed preferred
+address family every 10 minutes and notes that this can be implemented by
+flushing state every 10 minutes. Implementations **MAY** make the interval
+configurable. A subsequent successful establishment of the same service over
+the same applicable IPv6 context **SHOULD** clear the state, and a relevant
+network-context change **SHOULD** make the state inapplicable.
+
+In the absence of applicable recent-failure state, Rule 6 behaves as specified
+in [@!RFC6724], so IPv6 retains its normal default preference. This enhancement
+changes destination ordering only; it does not remove IPv6 addresses from the
+candidate list. Happy Eyeballs and other connection-racing mechanisms can
+therefore continue to attempt both address families.
+
+Implementations **MAY** expose recent-failure information to network-management
+systems for aggregation and operational diagnosis, as discussed in
+{{operational-diagnostics}}.
 
 ## Source/Destination Pair Consideration {#address-pairs}
 
@@ -169,11 +224,8 @@ When sorting destination addresses, implementations SHOULD consider the
 likely source address that would be used for each candidate destination,
 not only the destination in isolation. Ordering SHOULD prefer
 source/destination pairs that are more likely to succeed or perform well.
-
 This update aligns with the implementation architecture described in
-[@!RFC6724], where `getaddrinfo()` may obtain source-address information
-when sorting destinations. [@?GET-ADDR-PAIRS] demonstrates a prototype
-approach.
+[@!RFC6724]. [@?GET-ADDR-PAIRS] demonstrates a prototype approach.
 
 > TODO: Normative text for pair evaluation and interaction with existing
 > Rules 2, 5, and 9.
@@ -190,44 +242,81 @@ standardizes operator-controlled behavior.
 
 Implementations MUST support administrative configuration of one or more
 IPv4 and IPv6 prefix ranges for which Rule 9 does not apply. This update
-does not change ordering across address families: Rules 1--8, including
-default IPv6-over-IPv4 preference, continue to apply unchanged. When Rule
-9 would otherwise reorder candidates of the same address family, and a
-candidate destination address falls within a configured range, the
-implementation MUST preserve the order received from the name-resolution
-step (for example, the order of A or AAAA records in the DNS response)
-among those same-family candidates, rather than reordering them by
-longest matching prefix. This section does not introduce a new within-family sort order; it only prevents Rule 9 from overriding DNS response
+does not itself change ordering across address families: Rules 1--8 continue
+to apply before Rule 9. If the enhancement in {{connectivity-informed}} is
+enabled, Rule 6 is applied as updated there; otherwise Rule 6 remains as
+specified in [@!RFC6724]. When Rule 9 would otherwise reorder candidates of
+the same address family, and a candidate destination address falls within a
+configured range, the implementation MUST preserve the order received from
+the name-resolution step (for example, the order of A or AAAA records in the
+DNS response) among those same-family candidates, rather than reordering them
+by longest matching prefix. This section does not introduce a new within-family sort order; it only prevents Rule 9 from overriding DNS response
 order for configured destinations. Configuration mechanisms MAY include a
 policy table, `/etc/gai.conf`, or an equivalent system resolver setting; no
 application changes are required.
 
 # Implementation and Deployment Considerations
 
-Implementations that apply these updates inside `getaddrinfo()` preserve
-compatibility with existing applications that iterate the returned address
-list. Operators MAY use existing policy mechanisms such as `/etc/gai.conf`
-on glibc-based systems to influence precedence; however, such files alone
-do not fully disable Rule 9 today.
+Implementations that apply these updates inside `getaddrinfo()` [@?RFC3493] or an equivalent system mechanism preserve compatibility with existing applications that use the returned address ordering. For connectivity-informed selection, the implementation needs a mechanism to retain recent connection or service-establishment failures for later use by destination selection; no new application-facing API is required.
+
+Operators MAY use existing policy mechanisms such as `/etc/gai.conf` on
+glibc-based systems to influence precedence; however, such files alone do not
+fully disable Rule 9 today. The connectivity-informed enhancement does not
+require dynamic modification of the RFC 6724 policy table; the existing policy
+table continues to express address preference, while recent-failure state
+qualifies the Rule 6 preference when applicable.
 
 Backward compatibility on the global Internet MUST be preserved: with no
 operator configuration, implementations MUST behave as [@!RFC6724].
-None of the enhancements in this document take effect until explicitly
-enabled.
 
 This document is related to, but distinct from, the Enhanced Dual Stack
 (EDS) framework [@?EDS]. EDS describes a broader host-side deployment
 model; this document normatively updates destination address selection
 rules.
 
+## Operational Diagnostics {#operational-diagnostics}
+
+Recent-failure records can also be made available to network-management
+software. Such software MAY aggregate records across hosts and time by network
+context, destination or source prefix, service, failure type, or other
+operator-defined groupings. For example:
+
+| Field | Example |
+|---|---|
+| Network context | Corp-WiFi-A |
+| Destination/group | 2001:db8:1234::/48 |
+| Failure type | timeout |
+| IPv6 failure events | 47 |
+| IPv4 diversions | 1203 |
+| IPv4 success after IPv6 failure | 99% |
+
+In this example, `2001:db8:1234::/48` is an operator- or management-software-
+defined aggregation of individual IPv6 destination addresses; a host is not
+expected to infer such a prefix from a failed connection to a /128 destination.
+`IPv4 diversions` can count cases in which the updated Rule 6 causes IPv4 to
+be ordered ahead of an IPv6 destination that would otherwise have been
+preferred. Where both outcomes are known, reporting IPv4 success after an IPv6
+failure can help identify failures for which IPv4 successfully protected the
+user experience.
+
+This document does not specify how frequently recent-failure information is
+exported or aggregated.
+
 # Security Considerations
 
-Performance caches or probes used for address ordering MUST NOT expose
-confidential traffic patterns beyond what the host already observes locally.
-Implementations SHOULD bound retention of performance state and resist
-poisoning of ordering decisions from unauthenticated off-path input.
+Recent-failure state influences address ordering and could temporarily cause
+IPv4 to be preferred over IPv6. Implementations SHOULD derive this state from
+connection or service-establishment outcomes observed locally by the host or a
+trusted host networking component, and SHOULD resist poisoning of ordering
+decisions from unauthenticated off-path input. The bounded lifetime specified
+in {{connectivity-informed}} prevents a transient failure from suppressing the
+normal IPv6 preference indefinitely.
 
-> TODO: Expand (cache poisoning, timing side channels, probe amplification).
+Recent-failure records and aggregated diagnostics can reveal destinations,
+source addresses, services, network attachments, and traffic patterns. Access
+to such information SHOULD be restricted to authorized entities, and exported
+information SHOULD be minimized according to operational need and protected
+according to local security and privacy policy.
 
 # IANA Considerations
 
@@ -247,7 +336,6 @@ Dual Stack, helped shape the scope.
     <date year="2026" month="July" day="4"/>
   </front>
 </reference>
-
 <reference anchor="RFC1794" target="https://www.rfc-editor.org/info/rfc1794">
   <front>
     <title>DNS Support for Load Balancing</title>
@@ -256,7 +344,16 @@ Dual Stack, helped shape the scope.
     <date year="1995" month="April"/>
   </front>
 </reference>
-
+<reference anchor="RFC6555" target="https://www.rfc-editor.org/info/rfc6555">
+  <front>
+    <title>Happy Eyeballs: Success with Dual-Stack Hosts</title>
+    <author initials="D." surname="Wing" fullname="D. Wing">
+    </author>
+    <author initials="A." surname="Yourtchenko" fullname="A. Yourtchenko">
+    </author>
+    <date year="2012" month="April"/>
+  </front>
+</reference>
 <reference anchor="RFC8305" target="https://www.rfc-editor.org/info/rfc8305">
   <front>
     <title>Happy Eyeballs Version 2: Better Connectivity Using Concurrency</title>
@@ -267,7 +364,21 @@ Dual Stack, helped shape the scope.
     <date year="2017" month="December"/>
   </front>
 </reference>
-
+<reference anchor="HAPPY-HEV3" target="https://datatracker.ietf.org/doc/draft-ietf-happy-happyeyeballs-v3/">
+  <front>
+    <title>Happy Eyeballs Version 3: Better Connectivity Using Concurrency</title>
+    <author initials="T." surname="Pauly" fullname="Tommy Pauly">
+    </author>
+    <author initials="D." surname="Schinazi" fullname="David Schinazi">
+    </author>
+    <author initials="N." surname="Jaju" fullname="Nidhi Jaju">
+    </author>
+    <author initials="K." surname="Ishibashi" fullname="Kenichi Ishibashi">
+    </author>
+    <date year="2026" month="July" day="2"/>
+  </front>
+  <seriesInfo name="Internet-Draft" value="draft-ietf-happy-happyeyeballs-v3-04"/>
+</reference>
 <reference anchor="GET-ADDR-PAIRS" target="https://github.com/becarpenter/getapr">
   <front>
     <title>Get Address Pairs for Socket Programming in Python</title>
@@ -278,3 +389,4 @@ Dual Stack, helped shape the scope.
 </reference>
 
 {backmatter}
+

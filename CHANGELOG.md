@@ -5,6 +5,25 @@ Formatting-only edits are omitted unless they affect published semantics.
 
 ## Unreleased
 
+- **Connectivity-informed selection (§3.1):** Replace performance-aware placeholder with
+  normative update to Rule 6 ("Prefer higher precedence unless recently failed"); define
+  recent-failure records (network context, destination, source, service), 10-minute
+  expiry aligned with [RFC6555], and clearance on success or network-context change.
+- **Terminology:** Add recent-failure state, network context, and service; cite Happy
+  Eyeballs Version 3 [HAPPY-HEV3] for service-binding examples.
+- **Abstract / Introduction / Motivation:** Reframe around recent IPv6 connection or
+  service failures and [RFC6724] Section 10.3.1 timeouts rather than generic performance
+  sorting or Rules 9/10 supersession.
+- **Design principle:** Enhancements are independent and individually configurable;
+  implementable within existing host networking mechanisms without API changes.
+- **DNS load balancing (§3.3):** Clarify interaction with updated Rule 6 when
+  connectivity-informed selection is enabled.
+- **Operational diagnostics:** New subsection for aggregating recent-failure records for
+  network management.
+- **Security Considerations:** Rewrite for recent-failure state poisoning, lifetime, and
+  privacy of exported diagnostics.
+- **References:** Add [RFC6555], [HAPPY-HEV3], and proper citation for [RFC3493].
+
 - **Abstract:** Clarify that the DNS load-balancing update is for ISP and enterprise
   operators, not only ISPs.
 - **Acknowledgements:** Remove co-authors XiPeng Xiao and Brian Carpenter; keep thanks
