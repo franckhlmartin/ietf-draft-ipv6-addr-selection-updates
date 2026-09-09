@@ -288,31 +288,11 @@ rules.
 
 ## Operational Diagnostics {#operational-diagnostics}
 
-Recent-failure records can also be made available to network-management
-software. Such software MAY aggregate records across hosts and time by network
-context, destination or source prefix, service, failure type, or other
-operator-defined groupings. For example:
+Recent-failure records defined in Section 3.1 MAY be copied to persistent storage for operational diagnostics. These stored records preserve the original per-event information from Section 3.1 and are independent of the 10-minute recent-failure state used by Rule 6; expiration of that state does not require deletion of the corresponding stored record.
 
-| Field | Example |
-|---|---|
-| Network context | Corp-WiFi-A |
-| Destination/group | 2001:db8:1234::/48 |
-| Failure type | timeout |
-| IPv6 failure events | 47 |
-| IPv4 diversions | 1203 |
-| IPv4 success after IPv6 failure | 99% |
+Persistent diagnostic storage MUST be bounded. A rolling retention period of 7 days is RECOMMENDED by default, SHOULD be configurable by the administrator, and SHOULD also be subject to an implementation-defined or configurable storage-size limit. When a limit is reached, the oldest records SHOULD be removed first.
 
-In this example, `2001:db8:1234::/48` is an operator- or management-software-
-defined aggregation of individual IPv6 destination addresses; a host is not
-expected to infer such a prefix from a failed connection to a /128 destination.
-`IPv4 diversions` can count cases in which the updated Rule 6 causes IPv4 to
-be ordered ahead of an IPv6 destination that would otherwise have been
-preferred. Where both outcomes are known, reporting IPv4 success after an IPv6
-failure can help identify failures for which IPv4 successfully protected the
-user experience.
-
-This document does not specify how frequently recent-failure information is
-exported or aggregated.
+The stored records MAY be exported to network-management software for further aggregation and operational analysis. Such software may aggregate records across hosts, time, network context, destination or source prefix, service, failure type, or other operator-defined dimensions. The aggregation method and reporting format are outside the scope of this document.
 
 # Security Considerations
 
