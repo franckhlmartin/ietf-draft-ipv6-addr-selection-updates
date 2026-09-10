@@ -288,31 +288,9 @@ rules.
 
 ## Operational Diagnostics {#operational-diagnostics}
 
-Recent-failure records can also be made available to network-management
-software. Such software MAY aggregate records across hosts and time by network
-context, destination or source prefix, service, failure type, or other
-operator-defined groupings. For example:
+Implementations MAY emit recent-failure records defined in {{connectivity-informed}} to a system logging or telemetry facility (for example, syslog [RFC5424]) as an aid to operational diagnosis. Such records SHOULD preserve the per-event fields defined in {{connectivity-informed}}. Logging is independent of the recent-failure state used by Rule 6; expiration or clearing of that state does not require deletion of corresponding log messages.
 
-| Field | Example |
-|---|---|
-| Network context | Corp-WiFi-A |
-| Destination/group | 2001:db8:1234::/48 |
-| Failure type | timeout |
-| IPv6 failure events | 47 |
-| IPv4 diversions | 1203 |
-| IPv4 success after IPv6 failure | 99% |
-
-In this example, `2001:db8:1234::/48` is an operator- or management-software-
-defined aggregation of individual IPv6 destination addresses; a host is not
-expected to infer such a prefix from a failed connection to a /128 destination.
-`IPv4 diversions` can count cases in which the updated Rule 6 causes IPv4 to
-be ordered ahead of an IPv6 destination that would otherwise have been
-preferred. Where both outcomes are known, reporting IPv4 success after an IPv6
-failure can help identify failures for which IPv4 successfully protected the
-user experience.
-
-This document does not specify how frequently recent-failure information is
-exported or aggregated.
+Retention, forwarding, filtering, and aggregation of these messages are matters of local policy and are outside the scope of this document. Operators MAY use existing log-management or network-management systems to collect and analyze them across hosts and time.
 
 # Security Considerations
 
