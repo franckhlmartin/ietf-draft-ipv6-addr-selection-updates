@@ -288,11 +288,9 @@ rules.
 
 ## Operational Diagnostics {#operational-diagnostics}
 
-Recent-failure records defined in Section 3.1 MAY be copied to persistent storage for operational diagnostics. These stored records preserve the original per-event information from Section 3.1 and are independent of the 10-minute recent-failure state used by Rule 6; expiration of that state does not require deletion of the corresponding stored record.
+Implementations MAY emit recent-failure records defined in {{connectivity-informed}} to a system logging or telemetry facility (for example, syslog [RFC5424]) as an aid to operational diagnosis. Such records SHOULD preserve the per-event fields defined in {{connectivity-informed}}. Logging is independent of the recent-failure state used by Rule 6; expiration or clearing of that state does not require deletion of corresponding log messages.
 
-Persistent diagnostic storage MUST be bounded. A rolling retention period of 7 days is RECOMMENDED by default, SHOULD be configurable by the administrator, and SHOULD also be subject to an implementation-defined or configurable storage-size limit. When a limit is reached, the oldest records SHOULD be removed first.
-
-The stored records MAY be exported to network-management software for further aggregation and operational analysis. Such software may aggregate records across hosts, time, network context, destination or source prefix, service, failure type, or other operator-defined dimensions. The aggregation method and reporting format are outside the scope of this document.
+Retention, forwarding, filtering, and aggregation of these messages are matters of local policy and are outside the scope of this document. Operators MAY use existing log-management or network-management systems to collect and analyze them across hosts and time.
 
 # Security Considerations
 
