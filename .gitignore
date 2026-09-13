@@ -1,1 +1,5 @@
 .venv/
+_site/
+draft-martin-ipv6-addr-selection-updates-*.xml
+draft-martin-ipv6-addr-selection-updates-*.txt
+draft-martin-ipv6-addr-selection-updates-*.html

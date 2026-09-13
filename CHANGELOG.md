@@ -5,6 +5,10 @@ Formatting-only edits are omitted unless they affect published semantics.
 
 ## Unreleased
 
+- **Build:** Stop committing generated `.xml`, `.txt`, and `.html`. Those files
+  are produced locally by `make` and published to GitHub Pages from `main`.
+  Point "About This Document" at the HTML editor's copy.
+
 - **Build/nits:** Replace leftover `{{anchor}}` xrefs with mmark `(#anchor)` links;
   cite syslog as informative [RFC5424]; set document date to 12 September 2026;
   bold remaining RFC 2119 keywords (`MUST`/`SHOULD`/`MAY`) so they render as
