@@ -6,9 +6,9 @@ Network Working Group                                          F. Martin
 Internet-Draft                                           Peachymango.org
 Updates: 6724 (if approved)                                      X. Xiao
 Intended status: Standards Track          Huawei Technologies Dusseldorf
-Expires: 12 March 2027                                      B. Carpenter
+Expires: 16 March 2027                                      B. Carpenter
                                                   University of Auckland
-                                                        8 September 2026
+                                                       12 September 2026
 
 
                Updates to IPv6 Default Address Selection
@@ -53,7 +53,7 @@ About This Document
 
 
 
-Martin, et al.            Expires 12 March 2027                 [Page 1]
+Martin, et al.            Expires 16 March 2027                 [Page 1]
 
 Internet-Draft         ipv6-addr-selection-updates        September 2026
 
@@ -73,7 +73,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 12 March 2027.
+   This Internet-Draft will expire on 16 March 2027.
 
 Copyright Notice
 
@@ -104,19 +104,19 @@ Table of Contents
    4.  Implementation and Deployment Considerations  . . . . . . . .   8
      4.1.  Operational Diagnostics . . . . . . . . . . . . . . . . .   8
    5.  Security Considerations . . . . . . . . . . . . . . . . . . .   9
-   6.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .  10
-   7.  Acknowledgements  . . . . . . . . . . . . . . . . . . . . . .  10
+   6.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .   9
+   7.  Acknowledgements  . . . . . . . . . . . . . . . . . . . . . .   9
 
 
 
-Martin, et al.            Expires 12 March 2027                 [Page 2]
+Martin, et al.            Expires 16 March 2027                 [Page 2]
 
 Internet-Draft         ipv6-addr-selection-updates        September 2026
 
 
-   8.  Normative References  . . . . . . . . . . . . . . . . . . . .  10
-   9.  Informative References  . . . . . . . . . . . . . . . . . . .  10
-   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .  11
+   8.  Normative References  . . . . . . . . . . . . . . . . . . . .   9
+   9.  Informative References  . . . . . . . . . . . . . . . . . . .   9
+   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .  10
 
 1.  Introduction
 
@@ -165,7 +165,7 @@ Internet-Draft         ipv6-addr-selection-updates        September 2026
 
 
 
-Martin, et al.            Expires 12 March 2027                 [Page 3]
+Martin, et al.            Expires 16 March 2027                 [Page 3]
 
 Internet-Draft         ipv6-addr-selection-updates        September 2026
 
@@ -221,7 +221,7 @@ Internet-Draft         ipv6-addr-selection-updates        September 2026
 
 
 
-Martin, et al.            Expires 12 March 2027                 [Page 4]
+Martin, et al.            Expires 16 March 2027                 [Page 4]
 
 Internet-Draft         ipv6-addr-selection-updates        September 2026
 
@@ -277,7 +277,7 @@ Internet-Draft         ipv6-addr-selection-updates        September 2026
 
 
 
-Martin, et al.            Expires 12 March 2027                 [Page 5]
+Martin, et al.            Expires 16 March 2027                 [Page 5]
 
 Internet-Draft         ipv6-addr-selection-updates        September 2026
 
@@ -333,7 +333,7 @@ Internet-Draft         ipv6-addr-selection-updates        September 2026
 
 
 
-Martin, et al.            Expires 12 March 2027                 [Page 6]
+Martin, et al.            Expires 16 March 2027                 [Page 6]
 
 Internet-Draft         ipv6-addr-selection-updates        September 2026
 
@@ -347,7 +347,7 @@ Internet-Draft         ipv6-addr-selection-updates        September 2026
 
    Implementations MAY expose recent-failure information to network-
    management systems for aggregation and operational diagnosis, as
-   discussed in {{operational-diagnostics}}.
+   discussed in Section 4.1.
 
 3.2.  Source/Destination Pair Consideration
 
@@ -379,17 +379,17 @@ Internet-Draft         ipv6-addr-selection-updates        September 2026
    more IPv4 and IPv6 prefix ranges for which Rule 9 does not apply.
    This update does not itself change ordering across address families:
    Rules 1--8 continue to apply before Rule 9.  If the enhancement in
-   {{connectivity-informed}} is enabled, Rule 6 is applied as updated
-   there; otherwise Rule 6 remains as specified in [RFC6724].  When Rule
-   9 would otherwise reorder candidates of the same address family, and
-   a candidate destination address falls within a configured range, the
+   Section 3.1 is enabled, Rule 6 is applied as updated there; otherwise
+   Rule 6 remains as specified in [RFC6724].  When Rule 9 would
+   otherwise reorder candidates of the same address family, and a
+   candidate destination address falls within a configured range, the
    implementation MUST preserve the order received from the name-
    resolution step (for example, the order of A or AAAA records in the
    DNS response) among those same-family candidates, rather than
 
 
 
-Martin, et al.            Expires 12 March 2027                 [Page 7]
+Martin, et al.            Expires 16 March 2027                 [Page 7]
 
 Internet-Draft         ipv6-addr-selection-updates        September 2026
 
@@ -429,57 +429,26 @@ Internet-Draft         ipv6-addr-selection-updates        September 2026
 
 4.1.  Operational Diagnostics
 
-   Recent-failure records can also be made available to network-
-   management software.  Such software MAY aggregate records across
-   hosts and time by network context, destination or source prefix,
-   service, failure type, or other operator-defined groupings.  For
-   example:
+   Implementations MAY emit recent-failure records defined in
+   Section 3.1 to a system logging or telemetry facility (for example,
+   syslog [RFC5424]) as an aid to operational diagnosis.  Such records
+   SHOULD preserve the per-event fields defined in Section 3.1.  Logging
+   is independent of the recent-failure state used by Rule 6; expiration
+   or clearing of that state does not require deletion of corresponding
+   log messages.
+
+   Retention, forwarding, filtering, and aggregation of these messages
+   are matters of local policy and are outside the scope of this
+   document.  Operators MAY use existing log-management or network-
+   management systems to collect and analyze them across hosts and time.
 
 
 
 
-
-
-
-
-
-
-
-Martin, et al.            Expires 12 March 2027                 [Page 8]
+Martin, et al.            Expires 16 March 2027                 [Page 8]
 
 Internet-Draft         ipv6-addr-selection-updates        September 2026
 
-
-         +=================================+====================+
-         | Field                           | Example            |
-         +=================================+====================+
-         | Network context                 | Corp-WiFi-A        |
-         +---------------------------------+--------------------+
-         | Destination/group               | 2001:db8:1234::/48 |
-         +---------------------------------+--------------------+
-         | Failure type                    | timeout            |
-         +---------------------------------+--------------------+
-         | IPv6 failure events             | 47                 |
-         +---------------------------------+--------------------+
-         | IPv4 diversions                 | 1203               |
-         +---------------------------------+--------------------+
-         | IPv4 success after IPv6 failure | 99%                |
-         +---------------------------------+--------------------+
-
-                                 Table 2
-
-   In this example, 2001:db8:1234::/48 is an operator- or management-
-   software- defined aggregation of individual IPv6 destination
-   addresses; a host is not expected to infer such a prefix from a
-   failed connection to a /128 destination.  IPv4 diversions can count
-   cases in which the updated Rule 6 causes IPv4 to be ordered ahead of
-   an IPv6 destination that would otherwise have been preferred.  Where
-   both outcomes are known, reporting IPv4 success after an IPv6 failure
-   can help identify failures for which IPv4 successfully protected the
-   user experience.
-
-   This document does not specify how frequently recent-failure
-   information is exported or aggregated.
 
 5.  Security Considerations
 
@@ -489,8 +458,8 @@ Internet-Draft         ipv6-addr-selection-updates        September 2026
    outcomes observed locally by the host or a trusted host networking
    component, and SHOULD resist poisoning of ordering decisions from
    unauthenticated off-path input.  The bounded lifetime specified in
-   {{connectivity-informed}} prevents a transient failure from
-   suppressing the normal IPv6 preference indefinitely.
+   Section 3.1 prevents a transient failure from suppressing the normal
+   IPv6 preference indefinitely.
 
    Recent-failure records and aggregated diagnostics can reveal
    destinations, source addresses, services, network attachments, and
@@ -498,13 +467,6 @@ Internet-Draft         ipv6-addr-selection-updates        September 2026
    authorized entities, and exported information SHOULD be minimized
    according to operational need and protected according to local
    security and privacy policy.
-
-
-
-Martin, et al.            Expires 12 March 2027                 [Page 9]
-
-Internet-Draft         ipv6-addr-selection-updates        September 2026
-
 
 6.  IANA Considerations
 
@@ -533,6 +495,17 @@ Internet-Draft         ipv6-addr-selection-updates        September 2026
 
 9.  Informative References
 
+
+
+
+
+
+
+Martin, et al.            Expires 16 March 2027                 [Page 9]
+
+Internet-Draft         ipv6-addr-selection-updates        September 2026
+
+
    [EDS]      Xiao, X., "Enhanced Dual Stack: Automatic IPv6/IPv4
               Selection Based on Performance", 4 July 2026,
               <https://datatracker.ietf.org/doc/html/draft-xiao-v6ops-
@@ -550,18 +523,6 @@ Internet-Draft         ipv6-addr-selection-updates        September 2026
               <https://datatracker.ietf.org/doc/draft-ietf-happy-
               happyeyeballs-v3/>.
 
-
-
-
-
-
-
-
-Martin, et al.            Expires 12 March 2027                [Page 10]
-
-Internet-Draft         ipv6-addr-selection-updates        September 2026
-
-
    [POSIX]    IEEE and The Open Group, "IEEE/Open Group Standard for
               Information Technology -- Portable Operating System
               Interface (POSIX(TM)) Base Specifications, Issue 8", IEEE
@@ -577,6 +538,10 @@ Internet-Draft         ipv6-addr-selection-updates        September 2026
               RFC 3493, DOI 10.17487/RFC3493, March 2003,
               <https://www.rfc-editor.org/info/rfc3493>.
 
+   [RFC5424]  Gerhards, R., "The Syslog Protocol", RFC 5424,
+              DOI 10.17487/RFC5424, March 2009,
+              <https://www.rfc-editor.org/info/rfc5424>.
+
    [RFC6555]  Wing, D. and A. Yourtchenko, "Happy Eyeballs: Success with
               Dual-Stack Hosts", April 2012,
               <https://www.rfc-editor.org/info/rfc6555>.
@@ -589,6 +554,14 @@ Authors' Addresses
 
    Franck Martin
    Peachymango.org
+
+
+
+Martin, et al.            Expires 16 March 2027                [Page 10]
+
+Internet-Draft         ipv6-addr-selection-updates        September 2026
+
+
    Email: franck@peachymango.org
 
 
@@ -613,4 +586,31 @@ Authors' Addresses
 
 
 
-Martin, et al.            Expires 12 March 2027                [Page 11]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Martin, et al.            Expires 16 March 2027                [Page 11]

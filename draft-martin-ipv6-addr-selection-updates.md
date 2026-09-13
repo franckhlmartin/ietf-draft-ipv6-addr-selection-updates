@@ -5,7 +5,7 @@ ipr = "trust200902"
 updates = [6724]
 keyword = ["IPv6", "RFC6724", "address selection", "getaddrinfo", "DNS load balancing"]
 
-date = 2026-09-08
+date = 2026-09-12
 
 [seriesInfo]
 name = "Internet-Draft"
@@ -220,13 +220,13 @@ therefore continue to attempt both address families.
 
 Implementations **MAY** expose recent-failure information to network-management
 systems for aggregation and operational diagnosis, as discussed in
-{{operational-diagnostics}}.
+(#operational-diagnostics).
 
 ## Source/Destination Pair Consideration {#address-pairs}
 
-When sorting destination addresses, implementations SHOULD consider the
+When sorting destination addresses, implementations **SHOULD** consider the
 likely source address that would be used for each candidate destination,
-not only the destination in isolation. Ordering SHOULD prefer
+not only the destination in isolation. Ordering **SHOULD** prefer
 source/destination pairs that are more likely to succeed or perform well.
 This update aligns with the implementation architecture described in
 [@!RFC6724], where `getaddrinfo()` may obtain source-address information when
@@ -246,19 +246,19 @@ load-spreading intent. DNS operators and routing-oriented guidance have
 historically given conflicting advice on this point; this section
 standardizes operator-controlled behavior.
 
-Implementations MUST support administrative configuration of one or more
+Implementations **MUST** support administrative configuration of one or more
 IPv4 and IPv6 prefix ranges for which Rule 9 does not apply. This update
 does not itself change ordering across address families: Rules 1--8 continue
-to apply before Rule 9. If the enhancement in {{connectivity-informed}} is
+to apply before Rule 9. If the enhancement in (#connectivity-informed) is
 enabled, Rule 6 is applied as updated there; otherwise Rule 6 remains as
 specified in [@!RFC6724]. When Rule 9 would otherwise reorder candidates of
 the same address family, and a candidate destination address falls within a
-configured range, the implementation MUST preserve the order received from
+configured range, the implementation **MUST** preserve the order received from
 the name-resolution step (for example, the order of A or AAAA records in the
 DNS response) among those same-family candidates, rather than reordering them
 by longest matching prefix. This section does not introduce a new within-family
 sort order; it only prevents Rule 9 from overriding DNS response
-order for configured destinations. Configuration mechanisms MAY include a
+order for configured destinations. Configuration mechanisms **MAY** include a
 policy table, `/etc/gai.conf`, or an equivalent system resolver setting; no
 application changes are required.
 
@@ -271,15 +271,15 @@ selection, the implementation needs a mechanism to retain recent connection or
 service-establishment failures for later use by destination selection; no new
 application-facing API is required.
 
-Operators MAY use existing policy mechanisms such as `/etc/gai.conf` on
+Operators **MAY** use existing policy mechanisms such as `/etc/gai.conf` on
 glibc-based systems to influence precedence; however, such files alone do not
 fully disable Rule 9 today. The connectivity-informed enhancement does not
 require dynamic modification of the RFC 6724 policy table; the existing policy
 table continues to express address preference, while recent-failure state
 qualifies the Rule 6 preference when applicable.
 
-Backward compatibility on the global Internet MUST be preserved: with no
-operator configuration, implementations MUST behave as [@!RFC6724].
+Backward compatibility on the global Internet **MUST** be preserved: with no
+operator configuration, implementations **MUST** behave as [@!RFC6724].
 
 This document is related to, but distinct from, the Enhanced Dual Stack
 (EDS) framework [@?EDS]. EDS describes a broader host-side deployment
@@ -288,24 +288,24 @@ rules.
 
 ## Operational Diagnostics {#operational-diagnostics}
 
-Implementations MAY emit recent-failure records defined in {{connectivity-informed}} to a system logging or telemetry facility (for example, syslog [RFC5424]) as an aid to operational diagnosis. Such records SHOULD preserve the per-event fields defined in {{connectivity-informed}}. Logging is independent of the recent-failure state used by Rule 6; expiration or clearing of that state does not require deletion of corresponding log messages.
+Implementations **MAY** emit recent-failure records defined in (#connectivity-informed) to a system logging or telemetry facility (for example, syslog [@?RFC5424]) as an aid to operational diagnosis. Such records **SHOULD** preserve the per-event fields defined in (#connectivity-informed). Logging is independent of the recent-failure state used by Rule 6; expiration or clearing of that state does not require deletion of corresponding log messages.
 
-Retention, forwarding, filtering, and aggregation of these messages are matters of local policy and are outside the scope of this document. Operators MAY use existing log-management or network-management systems to collect and analyze them across hosts and time.
+Retention, forwarding, filtering, and aggregation of these messages are matters of local policy and are outside the scope of this document. Operators **MAY** use existing log-management or network-management systems to collect and analyze them across hosts and time.
 
 # Security Considerations
 
 Recent-failure state influences address ordering and could temporarily cause
-IPv4 to be preferred over IPv6. Implementations SHOULD derive this state from
+IPv4 to be preferred over IPv6. Implementations **SHOULD** derive this state from
 connection or service-establishment outcomes observed locally by the host or a
-trusted host networking component, and SHOULD resist poisoning of ordering
+trusted host networking component, and **SHOULD** resist poisoning of ordering
 decisions from unauthenticated off-path input. The bounded lifetime specified
-in {{connectivity-informed}} prevents a transient failure from suppressing the
+in (#connectivity-informed) prevents a transient failure from suppressing the
 normal IPv6 preference indefinitely.
 
 Recent-failure records and aggregated diagnostics can reveal destinations,
 source addresses, services, network attachments, and traffic patterns. Access
-to such information SHOULD be restricted to authorized entities, and exported
-information SHOULD be minimized according to operational need and protected
+to such information **SHOULD** be restricted to authorized entities, and exported
+information **SHOULD** be minimized according to operational need and protected
 according to local security and privacy policy.
 
 # IANA Considerations

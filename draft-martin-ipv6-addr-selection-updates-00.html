@@ -27,14 +27,14 @@ to existing application-facing socket APIs.
 <meta content="draft-martin-ipv6-addr-selection-updates-00" name="ietf.draft">
 <!-- Generator version information:
   xml2rfc 3.34.0
-    Python 3.14.5
-    ConfigArgParse 1.7.7
+    Python 3.12.13
+    ConfigArgParse 1.7.5
     google-i18n-address 3.1.1
     intervaltree 3.2.1
     Jinja2 3.1.6
-    lxml 6.1.3
+    lxml 6.1.2
     natsort 8.4.0
-    platformdirs 4.11.7
+    platformdirs 4.11.5
     pycountry 26.2.16
     PyYAML 6.0.3
     requests 2.34.2
@@ -1233,7 +1233,7 @@ li > p:last-of-type:only-child {
 </tr></thead>
 <tfoot><tr>
 <td class="left">Martin, et al.</td>
-<td class="center">Expires 12 March 2027</td>
+<td class="center">Expires 16 March 2027</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1249,12 +1249,12 @@ li > p:last-of-type:only-child {
 <a href="https://www.rfc-editor.org/rfc/rfc6724" class="eref">6724</a> (if approved)</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2026-09-08" class="published">8 September 2026</time>
+<time datetime="2026-09-12" class="published">12 September 2026</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2027-03-12">12 March 2027</time></dd>
+<dd class="expires"><time datetime="2027-03-16">16 March 2027</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -1320,7 +1320,7 @@ mailing list (<a href="mailto:v6ops@ietf.org">mailto:v6ops@ietf.org</a>), which 
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 12 March 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 16 March 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1618,7 +1618,7 @@ candidate list. Happy Eyeballs and other connection-racing mechanisms can
 therefore continue to attempt both address families.<a href="#section-3.1-9" class="pilcrow">¶</a></p>
 <p id="section-3.1-10">Implementations <span class="bcp14">MAY</span> expose recent-failure information to network-management
 systems for aggregation and operational diagnosis, as discussed in
-{{operational-diagnostics}}.<a href="#section-3.1-10" class="pilcrow">¶</a></p>
+<a href="#operational-diagnostics" class="auto internal xref">Section 4.1</a>.<a href="#section-3.1-10" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="address-pairs">
@@ -1626,9 +1626,9 @@ systems for aggregation and operational diagnosis, as discussed in
         <h3 id="name-source-destination-pair-con">
 <a href="#section-3.2" class="section-number selfRef">3.2. </a><a href="#name-source-destination-pair-con" class="section-name selfRef">Source/Destination Pair Consideration</a>
         </h3>
-<p id="section-3.2-1">When sorting destination addresses, implementations SHOULD consider the
+<p id="section-3.2-1">When sorting destination addresses, implementations <span class="bcp14">SHOULD</span> consider the
 likely source address that would be used for each candidate destination,
-not only the destination in isolation. Ordering SHOULD prefer
+not only the destination in isolation. Ordering <span class="bcp14">SHOULD</span> prefer
 source/destination pairs that are more likely to succeed or perform well.
 This update aligns with the implementation architecture described in
 <span>[<a href="#RFC6724" class="cite xref">RFC6724</a>]</span>, where <code>getaddrinfo()</code> may obtain source-address information when
@@ -1652,19 +1652,19 @@ concentrate traffic on one backend and undermine the operator's
 load-spreading intent. DNS operators and routing-oriented guidance have
 historically given conflicting advice on this point; this section
 standardizes operator-controlled behavior.<a href="#section-3.3-1" class="pilcrow">¶</a></p>
-<p id="section-3.3-2">Implementations MUST support administrative configuration of one or more
+<p id="section-3.3-2">Implementations <span class="bcp14">MUST</span> support administrative configuration of one or more
 IPv4 and IPv6 prefix ranges for which Rule 9 does not apply. This update
 does not itself change ordering across address families: Rules 1--8 continue
-to apply before Rule 9. If the enhancement in {{connectivity-informed}} is
+to apply before Rule 9. If the enhancement in <a href="#connectivity-informed" class="auto internal xref">Section 3.1</a> is
 enabled, Rule 6 is applied as updated there; otherwise Rule 6 remains as
 specified in <span>[<a href="#RFC6724" class="cite xref">RFC6724</a>]</span>. When Rule 9 would otherwise reorder candidates of
 the same address family, and a candidate destination address falls within a
-configured range, the implementation MUST preserve the order received from
+configured range, the implementation <span class="bcp14">MUST</span> preserve the order received from
 the name-resolution step (for example, the order of A or AAAA records in the
 DNS response) among those same-family candidates, rather than reordering them
 by longest matching prefix. This section does not introduce a new within-family
 sort order; it only prevents Rule 9 from overriding DNS response
-order for configured destinations. Configuration mechanisms MAY include a
+order for configured destinations. Configuration mechanisms <span class="bcp14">MAY</span> include a
 policy table, <code>/etc/gai.conf</code>, or an equivalent system resolver setting; no
 application changes are required.<a href="#section-3.3-2" class="pilcrow">¶</a></p>
 </section>
@@ -1682,14 +1682,14 @@ existing applications that use the returned address ordering. For connectivity-i
 selection, the implementation needs a mechanism to retain recent connection or
 service-establishment failures for later use by destination selection; no new
 application-facing API is required.<a href="#section-4-1" class="pilcrow">¶</a></p>
-<p id="section-4-2">Operators MAY use existing policy mechanisms such as <code>/etc/gai.conf</code> on
+<p id="section-4-2">Operators <span class="bcp14">MAY</span> use existing policy mechanisms such as <code>/etc/gai.conf</code> on
 glibc-based systems to influence precedence; however, such files alone do not
 fully disable Rule 9 today. The connectivity-informed enhancement does not
 require dynamic modification of the RFC 6724 policy table; the existing policy
 table continues to express address preference, while recent-failure state
 qualifies the Rule 6 preference when applicable.<a href="#section-4-2" class="pilcrow">¶</a></p>
-<p id="section-4-3">Backward compatibility on the global Internet MUST be preserved: with no
-operator configuration, implementations MUST behave as <span>[<a href="#RFC6724" class="cite xref">RFC6724</a>]</span>.<a href="#section-4-3" class="pilcrow">¶</a></p>
+<p id="section-4-3">Backward compatibility on the global Internet <span class="bcp14">MUST</span> be preserved: with no
+operator configuration, implementations <span class="bcp14">MUST</span> behave as <span>[<a href="#RFC6724" class="cite xref">RFC6724</a>]</span>.<a href="#section-4-3" class="pilcrow">¶</a></p>
 <p id="section-4-4">This document is related to, but distinct from, the Enhanced Dual Stack
 (EDS) framework <span>[<a href="#EDS" class="cite xref">EDS</a>]</span>. EDS describes a broader host-side deployment
 model; this document normatively updates destination address selection
@@ -1699,55 +1699,8 @@ rules.<a href="#section-4-4" class="pilcrow">¶</a></p>
         <h3 id="name-operational-diagnostics">
 <a href="#section-4.1" class="section-number selfRef">4.1. </a><a href="#name-operational-diagnostics" class="section-name selfRef">Operational Diagnostics</a>
         </h3>
-<p id="section-4.1-1">Recent-failure records can also be made available to network-management
-software. Such software MAY aggregate records across hosts and time by network
-context, destination or source prefix, service, failure type, or other
-operator-defined groupings. For example:<a href="#section-4.1-1" class="pilcrow">¶</a></p>
-<table class="center" id="table-2">
-          <caption><a href="#table-2" class="selfRef">Table 2</a></caption>
-<thead>
-            <tr>
-              <th class="text-left" rowspan="1" colspan="1">Field</th>
-              <th class="text-left" rowspan="1" colspan="1">Example</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">Network context</td>
-              <td class="text-left" rowspan="1" colspan="1">Corp-WiFi-A</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">Destination/group</td>
-              <td class="text-left" rowspan="1" colspan="1">2001:db8:1234::/48</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">Failure type</td>
-              <td class="text-left" rowspan="1" colspan="1">timeout</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">IPv6 failure events</td>
-              <td class="text-left" rowspan="1" colspan="1">47</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">IPv4 diversions</td>
-              <td class="text-left" rowspan="1" colspan="1">1203</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">IPv4 success after IPv6 failure</td>
-              <td class="text-left" rowspan="1" colspan="1">99%</td>
-            </tr>
-          </tbody>
-        </table>
-<p id="section-4.1-3">In this example, <code>2001:db8:1234::/48</code> is an operator- or management-software-
-defined aggregation of individual IPv6 destination addresses; a host is not
-expected to infer such a prefix from a failed connection to a /128 destination.
-<code>IPv4 diversions</code> can count cases in which the updated Rule 6 causes IPv4 to
-be ordered ahead of an IPv6 destination that would otherwise have been
-preferred. Where both outcomes are known, reporting IPv4 success after an IPv6
-failure can help identify failures for which IPv4 successfully protected the
-user experience.<a href="#section-4.1-3" class="pilcrow">¶</a></p>
-<p id="section-4.1-4">This document does not specify how frequently recent-failure information is
-exported or aggregated.<a href="#section-4.1-4" class="pilcrow">¶</a></p>
+<p id="section-4.1-1">Implementations <span class="bcp14">MAY</span> emit recent-failure records defined in <a href="#connectivity-informed" class="auto internal xref">Section 3.1</a> to a system logging or telemetry facility (for example, syslog <span>[<a href="#RFC5424" class="cite xref">RFC5424</a>]</span>) as an aid to operational diagnosis. Such records <span class="bcp14">SHOULD</span> preserve the per-event fields defined in <a href="#connectivity-informed" class="auto internal xref">Section 3.1</a>. Logging is independent of the recent-failure state used by Rule 6; expiration or clearing of that state does not require deletion of corresponding log messages.<a href="#section-4.1-1" class="pilcrow">¶</a></p>
+<p id="section-4.1-2">Retention, forwarding, filtering, and aggregation of these messages are matters of local policy and are outside the scope of this document. Operators <span class="bcp14">MAY</span> use existing log-management or network-management systems to collect and analyze them across hosts and time.<a href="#section-4.1-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1758,16 +1711,16 @@ exported or aggregated.<a href="#section-4.1-4" class="pilcrow">¶</a></p>
 <a href="#section-5" class="section-number selfRef">5. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
       </h2>
 <p id="section-5-1">Recent-failure state influences address ordering and could temporarily cause
-IPv4 to be preferred over IPv6. Implementations SHOULD derive this state from
+IPv4 to be preferred over IPv6. Implementations <span class="bcp14">SHOULD</span> derive this state from
 connection or service-establishment outcomes observed locally by the host or a
-trusted host networking component, and SHOULD resist poisoning of ordering
+trusted host networking component, and <span class="bcp14">SHOULD</span> resist poisoning of ordering
 decisions from unauthenticated off-path input. The bounded lifetime specified
-in {{connectivity-informed}} prevents a transient failure from suppressing the
+in <a href="#connectivity-informed" class="auto internal xref">Section 3.1</a> prevents a transient failure from suppressing the
 normal IPv6 preference indefinitely.<a href="#section-5-1" class="pilcrow">¶</a></p>
 <p id="section-5-2">Recent-failure records and aggregated diagnostics can reveal destinations,
 source addresses, services, network attachments, and traffic patterns. Access
-to such information SHOULD be restricted to authorized entities, and exported
-information SHOULD be minimized according to operational need and protected
+to such information <span class="bcp14">SHOULD</span> be restricted to authorized entities, and exported
+information <span class="bcp14">SHOULD</span> be minimized according to operational need and protected
 according to local security and privacy policy.<a href="#section-5-2" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -1835,6 +1788,10 @@ Dual Stack, helped shape the scope.<a href="#section-7-1" class="pilcrow">¶</a>
 <dt id="RFC3493">[RFC3493]</dt>
       <dd>
 <span class="refAuthor">Gilligan, R.</span>, <span class="refAuthor">Thomson, S.</span>, <span class="refAuthor">Bound, J.</span>, <span class="refAuthor">McCann, J.</span>, and <span class="refAuthor">W. Stevens</span>, <span class="refTitle">"Basic Socket Interface Extensions for IPv6"</span>, <span class="seriesInfo">RFC 3493</span>, <span class="seriesInfo">DOI 10.17487/RFC3493</span>, <time datetime="2003-03" class="refDate">March 2003</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc3493">https://www.rfc-editor.org/info/rfc3493</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC5424">[RFC5424]</dt>
+      <dd>
+<span class="refAuthor">Gerhards, R.</span>, <span class="refTitle">"The Syslog Protocol"</span>, <span class="seriesInfo">RFC 5424</span>, <span class="seriesInfo">DOI 10.17487/RFC5424</span>, <time datetime="2009-03" class="refDate">March 2009</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc5424">https://www.rfc-editor.org/info/rfc5424</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC6555">[RFC6555]</dt>
       <dd>

@@ -5,6 +5,11 @@ Formatting-only edits are omitted unless they affect published semantics.
 
 ## Unreleased
 
+- **Build/nits:** Replace leftover `{{anchor}}` xrefs with mmark `(#anchor)` links;
+  cite syslog as informative [RFC5424]; set document date to 12 September 2026;
+  bold remaining RFC 2119 keywords (`MUST`/`SHOULD`/`MAY`) so they render as
+  `<bcp14>`.
+
 - **getaddrinfo() / POSIX:** Restore `getaddrinfo()` in the Abstract, Motivation,
   Design Principle, address-pair section, and Implementation Considerations as the
   standard host API (with "or equivalent"), and add informative [POSIX]
