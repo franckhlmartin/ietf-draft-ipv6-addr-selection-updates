@@ -51,6 +51,8 @@ This note is to be removed before publishing as an RFC.
 
 The latest revision of this draft can be found at
 https://github.com/franckhlmartin/ietf-draft-ipv6-addr-selection-updates/.
+An HTML editor's copy is at
+https://franckhlmartin.github.io/ietf-draft-ipv6-addr-selection-updates/draft-martin-ipv6-addr-selection-updates.html.
 Status information for this document may be found at
 https://datatracker.ietf.org/doc/draft-martin-ipv6-addr-selection-updates/.
 Discussion of this document takes place on the v6ops Working Group

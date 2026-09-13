@@ -4,7 +4,7 @@ Follow these steps in order.
 
 - Run `./scripts/commit-check-changes.sh` to list changes since the last push (it runs `git fetch` and `git diff` against the upstream branch).
 - Or manually: `git fetch origin`, then `git diff --name-status origin/<branch>`.
-- Summarize what changed (draft content, generated outputs, config, docs, scripts, CI).
+- Summarize what changed (draft content, config, docs, scripts, CI). Do not treat generated `.xml`, `.txt`, or `.html` as intended commit contents.
 
 ## 2. Update documentation if needed before any commit or push
 
@@ -17,7 +17,7 @@ Based on the changed files, update docs only when the change warrants it
 
 ## 4. Commit and push
 
-- Run `make` if `draft-martin-ipv6-addr-selection-updates.md` changed, and include the updated `.xml`, `.txt`, and `.html` outputs in the commit.
+- Run `make` locally if `draft-martin-ipv6-addr-selection-updates.md` changed, so you can review the generated XML, text, and HTML. Do not add those generated files to the commit; they are ignored and published from GitHub Actions.
 - Run `git status` to confirm what will be committed.
 - Stage all intended changes: `git add …` (or `git add -A` if the full set is correct).
 - Commit with a clear message that describes the change (e.g. "Add X", "Fix Y", "Update docs for Z"). Prefer conventional-style messages.
