@@ -5,11 +5,11 @@ ipr = "trust200902"
 updates = [6724]
 keyword = ["IPv6", "RFC6724", "address selection", "getaddrinfo", "DNS load balancing"]
 
-date = 2026-09-12
+date = 2026-09-15
 
 [seriesInfo]
 name = "Internet-Draft"
-value = "draft-martin-ipv6-addr-selection-updates-00"
+value = "draft-martin-ipv6-addr-selection-updates-01"
 status = "standard"
 [[author]]
 initials = "F."

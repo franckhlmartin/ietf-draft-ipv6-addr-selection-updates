@@ -36,7 +36,7 @@ make clean-all # also remove the local .venv
 ```
 
 Before submitting, run `make` and upload the generated XML (for example
-`draft-martin-ipv6-addr-selection-updates-00.xml`) to the
+`draft-martin-ipv6-addr-selection-updates-01.xml`) to the
 [IETF Datatracker submission tool](https://datatracker.ietf.org/submit/).
 Do not add the generated `.xml`, `.txt`, or `.html` files to the commit.
 

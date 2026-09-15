@@ -5,6 +5,14 @@ Formatting-only edits are omitted unless they affect published semantics.
 
 ## Unreleased
 
+- **Revision -01:** Bump Internet-Draft version and date for the next Datatracker
+  submission; build outputs renamed to match.
+
+## -00 (2026-09-15)
+
+Submitted to the IETF Datatracker as
+`draft-martin-ipv6-addr-selection-updates-00`.
+
 - **Build:** Stop committing generated `.xml`, `.txt`, and `.html`. Those files
   are produced locally by `make` and published to GitHub Pages from `main`.
   Point "About This Document" at the HTML editor's copy.
