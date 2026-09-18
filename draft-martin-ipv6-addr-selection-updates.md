@@ -131,6 +131,20 @@ equivalent system resolver mechanism. This document does not require changes to
 existing application-facing socket APIs or application source code. Experimental
 evidence for address-pair-aware ordering appears in [@?GET-ADDR-PAIRS].
 
+## Related Work
+
+[@?RFC6724-UPDATE] updates [@!RFC6724] by revising the default address
+selection policy table, elevating preference for known-local Unique Local
+Addresses (ULAs), and making Rule 5.5 a requirement. That work addresses
+static policy and local ULA preference for common dual-stack deployments.
+
+This document does not change ULA policy-table defaults or Rule 5.5. It
+specifies optional destination-selection enhancements---connectivity-informed
+Rule 6 behavior, source/destination pair consideration, and an operator-
+controlled exception to Rule 9 for DNS-based load balancing---that are
+independent of, and complementary to, the policy-table and known-local ULA
+updates in [@?RFC6724-UPDATE].
+
 # Terminology
 
 **Destination address selection:** The process by which a host orders
@@ -241,11 +255,19 @@ of Section 6.
 Thus `getaddrinfo()` may benefit from source-address information when
 sorting destinations. [@?GET-ADDR-PAIRS] demonstrates a prototype approach.
 
-This mechanism might cause re-ordering of destination addresses after
-the destination address selection rules in Section 6 of [@!RFC6724] have
-been applied. However, any such re-ordering **MUST NOT** override Rules
-1, 2, 3, or 8 (i.e., must not cause scope mismatches or choose an
-unreachable or deprecated address).
+Section 9 of [@?RFC6724-UPDATE] notes that the destination-first sorting
+model of [@!RFC6724] is fundamentally limited and that ranking address pairs
+directly would be preferable, but treats that approach as beyond its scope.
+This enhancement addresses that deferred gap. It is orthogonal to known-local
+ULA insertion and to the updated default policy table in [@?RFC6724-UPDATE];
+pair evaluation does not replace or require those policy-table changes.
+
+When this enhancement is enabled, any re-ordering based on
+source/destination pairs **SHOULD** be performed after all destination
+address selection rules in Section 6 of [@!RFC6724] have been applied.
+However, any such re-ordering **MUST NOT** override Rules 1, 2, 3, or 8
+(i.e., must not cause scope mismatches or choose an unreachable or
+deprecated address).
 
 ## Preserving DNS Load-Balancing Order {#dns-load-balancing}
 
@@ -291,7 +313,16 @@ table continues to express address preference, while recent-failure state
 qualifies the Rule 6 preference when applicable.
 
 Backward compatibility on the global Internet **MUST** be preserved: with no
-operator configuration, implementations **MUST** behave as [@!RFC6724].
+operator configuration of this document's enhancements, implementations
+**MUST** behave as [@!RFC6724] as updated by [@?RFC6724-UPDATE] once that
+document is published (and as [@!RFC6724] alone until then).
+
+Hosts that implement both this document and [@?RFC6724-UPDATE] apply the
+updated policy table, including known-local ULA rows, as the baseline. When
+enabled, this document's enhancements further qualify destination ordering
+---for example, temporary IPv4 preference after a recent IPv6 failure, skipping
+Rule 9 for configured prefixes, or pair-aware sorting---without replacing
+those policy-table defaults.
 
 This document is related to, but distinct from, the Enhanced Dual Stack
 (EDS) framework [@?EDS]. EDS describes a broader host-side deployment
@@ -337,6 +368,22 @@ Dual Stack, helped shape the scope.
     </author>
     <date year="2026" month="July" day="4"/>
   </front>
+</reference>
+<reference anchor="RFC6724-UPDATE" target="https://datatracker.ietf.org/doc/html/draft-ietf-6man-rfc6724-update-25">
+  <front>
+    <title>Prioritizing known-local IPv6 ULAs through address selection policy</title>
+    <author initials="N." surname="Buraglio" fullname="Nick Buraglio">
+      <organization>Energy Sciences Network</organization>
+    </author>
+    <author initials="T." surname="Chown" fullname="Tim Chown">
+      <organization>Jisc</organization>
+    </author>
+    <author initials="J." surname="Duncan" fullname="Jeremy Duncan">
+      <organization>Tachyon Dynamics</organization>
+    </author>
+    <date year="2025" month="August" day="11"/>
+  </front>
+  <seriesInfo name="Internet-Draft" value="draft-ietf-6man-rfc6724-update-25"/>
 </reference>
 <reference anchor="POSIX" target="https://pubs.opengroup.org/onlinepubs/9799919799/functions/getaddrinfo.html">
   <front>
