@@ -226,16 +226,26 @@ systems for aggregation and operational diagnosis, as discussed in
 
 ## Source/Destination Pair Consideration {#address-pairs}
 
-When sorting destination addresses, implementations **SHOULD** consider the
-likely source address that would be used for each candidate destination,
-not only the destination in isolation. Ordering **SHOULD** prefer
+When sorting destination addresses, implementations **SHOULD** determine the
+source address that would be used for each candidate destination,
+not only the destination in isolation. This will require an operating system
+dependent mechanism. Destination address ordering **SHOULD** then prefer
 source/destination pairs that are more likely to succeed or perform well.
-This update aligns with the implementation architecture described in
-[@!RFC6724], where `getaddrinfo()` may obtain source-address information when
+This ordering may depend on cached information from previous network
+operations and on techniques similar to those described in [@?RFC8305].
+This aligns with the implementation architecture described in
+[@!RFC6724], in particular the note at the end of Section 5
+that an implementation may know 'which source address will result in
+the "best" communications performance' and a similar note at the end
+of Section 6.
+Thus `getaddrinfo()` may benefit from source-address information when
 sorting destinations. [@?GET-ADDR-PAIRS] demonstrates a prototype approach.
 
-> TODO: Normative text for pair evaluation and interaction with existing
-> Rules 2, 5, and 9.
+This mechanism might cause re-ordering of destination addresses after
+the destination address selection rules in Section 6 of [@!RFC6724] have
+been applied. However, any such re-ordering **MUST NOT** override Rules
+1, 2, 3, or 8 (i.e., must not cause scope mismatches or choose an
+unreachable or deprecated address).
 
 ## Preserving DNS Load-Balancing Order {#dns-load-balancing}
 
