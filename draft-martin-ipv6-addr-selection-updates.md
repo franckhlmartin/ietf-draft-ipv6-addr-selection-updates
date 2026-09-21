@@ -185,18 +185,17 @@ recent-failure record. The logical record contains the following fields:
 | Field | Example |
 |---|---|
 | Network context | Corp-WiFi-A |
-| IPv6 destination | 2001:db8:1234:5678::42 |
-| IPv6 source | 2001:db8:1111::123 |
+| IPv6 destination address| 2001:db8:1234:5678::42 |
+| IPv6 source prefix or address| 2001:db8:1111::123 |
 | Service | TCP/443 |
 | Failure type | timeout |
 | Timestamp | 2026-09-07T14:32:18+02:00 |
 
-The first four fields identify the scope to which the observation applies. An
-entry is applicable when its network context, IPv6 destination, IPv6 source,
-and service match the current candidate as far as those fields are known. The
-`IPv6 source` and `Service` fields **SHOULD** be recorded when available. The
-Service field can contain only transport-level information or can include
-higher-layer protocol or service-binding information when available.
+The IPv6 destination field contains the IPv6 destination address selected for the failed attempt. The IPv6 source field SHOULD contain the locally known prefix associated with the IPv6 source address selected for that attempt. If no applicable source prefix is known, the complete IPv6 source address SHOULD be used instead. An implementation MUST NOT infer a prefix length solely from the IPv6 address value.
+
+The asymmetry is intentional. A failure may be specific to an individual destination, so the destination is recorded as an address. On the source side, multiple source addresses, including temporary addresses, can belong to the same locally known prefix. Recording the source prefix when available keeps the failure state applicable across such source-address changes without unnecessarily creating separate state for each source address.
+
+The first four fields identify the scope to which the observation applies. An entry is applicable when its network context, IPv6 destination address, IPv6 source prefix or address, and service match the current candidate as far as those fields are known. For an IPv6 source prefix, the selected source address for the current candidate MUST belong to that prefix; for an IPv6 source address, it MUST match that address. The Service field SHOULD be recorded when available. The Service field can contain only transport-level information or can include higher-layer protocol or service-binding information when available.
 
 A failed attempt to establish a usable instance of the identified service,
 such as a timeout, unreachable indication, connection refusal, or an
