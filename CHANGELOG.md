@@ -5,6 +5,18 @@ Formatting-only edits are omitted unless they affect published semantics.
 
 ## Unreleased
 
+- **Address pairs:** Clarify that pair-based re-ordering **SHOULD** run after
+  all Section 6 destination selection rules of [RFC6724], while still
+  **MUST NOT** override Rules 1, 2, 3, or 8.
+
+- **Related Work / 6man positioning:** Cite
+  [draft-ietf-6man-rfc6724-update](https://datatracker.ietf.org/doc/draft-ietf-6man-rfc6724-update/)
+  as informative [RFC6724-UPDATE]; add a Related Work subsection distinguishing
+  that draft's policy-table and known-local ULA defaults from this document's
+  optional destination-selection enhancements; align the address-pair section
+  with that draft's Section 9 deferred-gap language; note composability with
+  the updated policy table in Implementation and Deployment Considerations.
+
 - **Revision -01:** Bump Internet-Draft version and date for the next Datatracker
   submission; build outputs renamed to match.
 
