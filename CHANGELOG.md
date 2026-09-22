@@ -7,7 +7,7 @@ Formatting-only edits are omitted unless they affect published semantics.
 
 - **Address pairs:** Clarify that pair-based re-ordering **SHOULD** run after
   all Section 6 destination selection rules of [RFC6724], while still
-  **MUST NOT** overriding Rules 1, 2, 3, or 8.
+  **MUST NOT** override Rules 1, 2, 3, or 8.
 
 - **Related Work / 6man positioning:** Cite
   [draft-ietf-6man-rfc6724-update](https://datatracker.ietf.org/doc/draft-ietf-6man-rfc6724-update/)
