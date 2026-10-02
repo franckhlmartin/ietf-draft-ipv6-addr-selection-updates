@@ -200,7 +200,7 @@ recent-failure record. The logical record contains the following fields:
 |---|---|
 | Network context | Corp-WiFi-A |
 | IPv6 destination address| 2001:db8:1234:5678::42 |
-| IPv6 source prefix or address| 2001:db8:1111::123 |
+| IPv6 source prefix or address| 2001:db8:1111:1200::/56 |
 | Service | TCP/443 |
 | Failure type | timeout |
 | Timestamp | 2026-09-07T14:32:18+02:00 |
@@ -214,8 +214,7 @@ The first four fields identify the scope to which the observation applies. An en
 A failed attempt to establish a usable instance of the identified service,
 such as a timeout, unreachable indication, connection refusal, or an
 applicable higher-layer establishment failure, creates or refreshes
-recent-failure state. Local API or resource errors unrelated to the attempted
-IPv6 communication do not. No active probing or measurement of RTT, packet
+recent-failure state. An implementation example is provided in Section 4. No active probing or measurement of RTT, packet
 loss, throughput, or other performance statistics is required.
 
 Recent-failure state **SHOULD** expire 10 minutes after the most recent
@@ -302,7 +301,7 @@ Implementations that apply these updates inside `getaddrinfo()` [@?POSIX]
 existing applications that use the returned address ordering. For connectivity-informed
 selection, the implementation needs a mechanism to retain recent connection or
 service-establishment failures for later use by destination selection; no new
-application-facing API is required.
+application-facing API is required.  One possible implementation is for the host to maintain a Recent IPv6 Failure Table containing the recent-failure records defined in (#connectivity-informed). A component that detects an applicable IPv6 connection or service-establishment failure, such as the TCP stack, a Happy Eyeballs implementation, a QUIC implementation, or a higher-layer service implementation, can report the failure to the mechanism maintaining this table. The RFC 6724 destination-selection implementation can then consult the table for an applicable entry when applying the updated Rule 6. The interface used to report failures and the location and representation of the table are implementation-specific.
 
 Operators **MAY** use existing policy mechanisms such as `/etc/gai.conf` on
 glibc-based systems to influence precedence; however, such files alone do not
