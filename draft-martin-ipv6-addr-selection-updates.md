@@ -181,7 +181,7 @@ The updated rule is:
 > Otherwise, if Precedence(DA) > Precedence(DB), then prefer DA. Similarly, if
 > Precedence(DA) < Precedence(DB), then prefer DB.
 
-When this enhancement is enabled, the host networking implementation MUST maintain a Recent IPv6 Failure Table, or equivalent host-local state, containing recent-failure records with the following fields:
+When this enhancement is enabled, the OS or platform transport connection-establishment implementations, such as connect() for TCP and the corresponding mechanism for QUIC, MUST create or refresh records in a Recent IPv6 Failure Table, or equivalent host-local state, for applicable IPv6 connection-establishment failures that they directly observe.
 
 | Field | Example |
 |---|---|
@@ -198,7 +198,7 @@ The asymmetry is intentional. A failure may be specific to an individual destina
 
 The first four fields identify the scope to which the observation applies. An entry is applicable when its network context, IPv6 destination address, IPv6 source prefix or address, and transport protocol and port match the current candidate as far as those fields are known. For an IPv6 source prefix, the selected source address for the current candidate MUST belong to that prefix; for an IPv6 source address, it MUST match that address.
 
-When this enhancement is enabled, the OS or platform transport connection-establishment implementations, such as connect() for TCP and the corresponding mechanism for QUIC, MUST create or refresh recent-failure state for applicable IPv6 connection-establishment failures that they directly observe. Applicable failures include a timeout, unreachable indication, or connection refusal. No active probing or measurement of RTT, packet loss, throughput, or other performance statistics is required.
+Applicable failure types include timeout, unreachable, refusal, or reset. 
 
 Recent-failure state **SHOULD** expire 10 minutes after the most recent
 applicable failure. This interval follows the stateful Happy Eyeballs guidance
