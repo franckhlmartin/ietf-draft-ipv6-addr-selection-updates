@@ -211,11 +211,7 @@ The asymmetry is intentional. A failure may be specific to an individual destina
 
 The first four fields identify the scope to which the observation applies. An entry is applicable when its network context, IPv6 destination address, IPv6 source prefix or address, and service match the current candidate as far as those fields are known. For an IPv6 source prefix, the selected source address for the current candidate MUST belong to that prefix; for an IPv6 source address, it MUST match that address. The Service field SHOULD be recorded when available. The Service field can contain only transport-level information or can include higher-layer protocol or service-binding information when available.
 
-A failed attempt to establish a usable instance of the identified service,
-such as a timeout, unreachable indication, connection refusal, or an
-applicable higher-layer establishment failure, creates or refreshes
-recent-failure state. An implementation example is provided in Section 4. No active probing or measurement of RTT, packet
-loss, throughput, or other performance statistics is required.
+When this enhancement is enabled, the host networking implementation MUST create or refresh recent-failure state for applicable IPv6 connection-establishment failures that it directly observes. OS or platform mechanisms that observe additional connection- or service-establishment outcomes, such as Happy Eyeballs, QUIC, or higher-layer service-establishment implementations, SHOULD report applicable IPv6 failures to the mechanism maintaining the recent-failure state. Applicable failures include a timeout, unreachable indication, connection refusal, or an applicable higher-layer establishment failure. An implementation example is provided in Section 4. No active probing or measurement of RTT, packet loss, throughput, or other performance statistics is required.
 
 Recent-failure state **SHOULD** expire 10 minutes after the most recent
 applicable failure. This interval follows the stateful Happy Eyeballs guidance
