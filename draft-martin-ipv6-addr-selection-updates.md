@@ -37,16 +37,15 @@ organization = "University of Auckland"
 
 .# Abstract
 This document updates RFC 6724 with three improvements to IPv6 destination
-address selection. The updates allow recent IPv6 connection or service
+address selection. The updates allow recent IPv6 connection 
 failures to influence IPv6/IPv4 ordering, incorporate likely
 source/destination address pairs when sorting candidates, and let ISP and
 enterprise operators preserve DNS load-balancing order where Rule 9 would
 otherwise override it. The updates are intended to be implementable inside
-`getaddrinfo()` or an equivalent system mechanism, without requiring changes
-to existing application-facing socket APIs.
+`getaddrinfo()` or an equivalent system mechanism and, for connectivity-informed destination selection, in transport connection-establishment mechanisms such as connect() for TCP and the corresponding mechanism for QUIC, without requiring changes to existing application-facing socket APIs.
 
 .# About This Document
-
+ 
 This note is to be removed before publishing as an RFC.
 
 The latest revision of this draft can be found at
@@ -74,8 +73,7 @@ ordering. In particular, Section 10.3.1 of [@!RFC6724] notes that a host with
 working IPv4 connectivity but broken IPv6 connectivity can experience unwanted
 timeouts because the default policy normally prefers IPv6.
 
-This document specifies three updates addressing recent IPv6 connection or
-service failures, source/destination address-pair considerations, and DNS-based
+This document specifies three updates addressing recent IPv6 connection failures, source/destination address-pair considerations, and DNS-based
 load balancing. The implementations described in this document are believed to
 benefit operators in their IPv6 deployments and IPv4 retirement.
 
@@ -96,7 +94,7 @@ that list. The rules provide useful interoperability and policy control on the
 global Internet, but three operational gaps have emerged:
 
 * **Connectivity:** Static precedence can continue to prefer IPv6 after an IPv6
-  connection or service-establishment attempt has recently failed. Happy
+  connection-establishment attempt has recently failed. Happy
   Eyeballs [@?RFC8305] reduces the impact for applications that race IPv6 and
   IPv4 attempts, but other applications can repeatedly experience the same
   failure or delay.
@@ -127,8 +125,7 @@ enabling one enhancement **MUST NOT** implicitly enable another, so current
 [@!RFC6724] behavior is preserved without deliberate administrative input.
 
 The enhancements **SHOULD** be implementable inside `getaddrinfo()` or an
-equivalent system resolver mechanism. This document does not require changes to
-existing application-facing socket APIs or application source code. Experimental
+equivalent system resolver mechanism and, for connectivity-informed destination selection, in transport connection-establishment mechanisms such as connect() for TCP and the corresponding mechanism for QUIC. This document does not require changes to existing application-facing socket APIs or application source code. Experimental
 evidence for address-pair-aware ordering appears in [@?GET-ADDR-PAIRS].
 
 ## Related Work
@@ -156,19 +153,11 @@ and a candidate destination address used to evaluate connectivity or
 ordering for a given communication attempt.
 
 **Recent-failure state:** Host-local state recording a recent IPv6 connection
-or service-establishment failure that can be consulted by destination address
-selection.
+failure that can be consulted by destination address selection.
 
 **Network context:** Information identifying the network environment in which
 a connection attempt is made, such as the outgoing interface, network
 attachment, VPN, or equivalent implementation-specific context.
-
-**Service:** The transport and port and, when available, higher-layer protocol
-or service-binding information associated with an attempt. For example, the
-service can be represented as `TCP/443`, `HTTPS/TCP/443`, or
-`HTTPS/h3/QUIC/443`. Happy Eyeballs Version 3 [@?HAPPY-HEV3] similarly extends
-connection establishment beyond transport-only information when such service
-information is available.
 
 # Updates to RFC6724
 
@@ -192,38 +181,31 @@ The updated rule is:
 > Otherwise, if Precedence(DA) > Precedence(DB), then prefer DA. Similarly, if
 > Precedence(DA) < Precedence(DB), then prefer DB.
 
-When this enhancement is enabled, the component that determines that an IPv6
-connection or service-establishment attempt has failed creates or refreshes a
-recent-failure record. The logical record contains the following fields:
+When this enhancement is enabled, the OS or platform transport connection-establishment implementations, such as connect() for TCP and the corresponding mechanism for QUIC, MUST create or refresh records in a Recent IPv6 Failure Table, or equivalent host-local state, for applicable IPv6 connection-establishment failures that they directly observe.
 
 | Field | Example |
 |---|---|
 | Network context | Corp-WiFi-A |
 | IPv6 destination address| 2001:db8:1234:5678::42 |
-| IPv6 source prefix or address| 2001:db8:1111::123 |
-| Service | TCP/443 |
+| IPv6 source prefix or address| 2001:db8:1111:1200::/56 |
+| Transport protocol and port | TCP/443 |
 | Failure type | timeout |
 | Timestamp | 2026-09-07T14:32:18+02:00 |
 
-The IPv6 destination field contains the IPv6 destination address selected for the failed attempt. The IPv6 source field SHOULD contain the locally known prefix associated with the IPv6 source address selected for that attempt. If no applicable source prefix is known, the complete IPv6 source address SHOULD be used instead. An implementation MUST NOT infer a prefix length solely from the IPv6 address value.
+The IPv6 destination field contains the IPv6 destination address selected for the failed attempt. The IPv6 source field SHOULD contain the locally known prefix associated with the IPv6 source address selected for that attempt. The associated prefix length can be obtained from the host's interface-address configuration for the selected source address. If no applicable source prefix is known, the complete IPv6 source address SHOULD be used instead. An implementation MUST NOT infer a prefix length solely from the IPv6 address value.
 
 The asymmetry is intentional. A failure may be specific to an individual destination, so the destination is recorded as an address. On the source side, multiple source addresses, including temporary addresses, can belong to the same locally known prefix. Recording the source prefix when available keeps the failure state applicable across such source-address changes without unnecessarily creating separate state for each source address.
 
-The first four fields identify the scope to which the observation applies. An entry is applicable when its network context, IPv6 destination address, IPv6 source prefix or address, and service match the current candidate as far as those fields are known. For an IPv6 source prefix, the selected source address for the current candidate MUST belong to that prefix; for an IPv6 source address, it MUST match that address. The Service field SHOULD be recorded when available. The Service field can contain only transport-level information or can include higher-layer protocol or service-binding information when available.
+The first four fields identify the scope to which the observation applies. An entry is applicable when its network context, IPv6 destination address, IPv6 source prefix or address, and transport protocol and port match the current candidate as far as those fields are known. For an IPv6 source prefix, the selected source address for the current candidate MUST belong to that prefix; for an IPv6 source address, it MUST match that address.
 
-A failed attempt to establish a usable instance of the identified service,
-such as a timeout, unreachable indication, connection refusal, or an
-applicable higher-layer establishment failure, creates or refreshes
-recent-failure state. Local API or resource errors unrelated to the attempted
-IPv6 communication do not. No active probing or measurement of RTT, packet
-loss, throughput, or other performance statistics is required.
+Applicable failure types include timeout, unreachable, refusal, or reset. 
 
 Recent-failure state **SHOULD** expire 10 minutes after the most recent
 applicable failure. This interval follows the stateful Happy Eyeballs guidance
 in Section 4.2 of [@?RFC6555], which recommends retrying a failed preferred
 address family every 10 minutes and notes that this can be implemented by
 flushing state every 10 minutes. Implementations **MAY** make the interval
-configurable. A subsequent successful establishment of the same service over
+configurable. A subsequent successful establishment of the same connection over
 the same applicable IPv6 context **SHOULD** clear the state, and a relevant
 network-context change **SHOULD** make the state inapplicable.
 
@@ -297,12 +279,7 @@ application changes are required.
 
 # Implementation and Deployment Considerations
 
-Implementations that apply these updates inside `getaddrinfo()` [@?POSIX]
-[@?RFC3493] or an equivalent system mechanism preserve compatibility with
-existing applications that use the returned address ordering. For connectivity-informed
-selection, the implementation needs a mechanism to retain recent connection or
-service-establishment failures for later use by destination selection; no new
-application-facing API is required.
+Implementations that apply these updates inside getaddrinfo() [@?POSIX] [@?RFC3493] or an equivalent system mechanism preserve compatibility with existing applications that use the returned address ordering. For connectivity-informed selection, the implementation needs a mechanism to retain recent connection-establishment failures for later use by destination selection; no new application-facing API is required.
 
 Operators **MAY** use existing policy mechanisms such as `/etc/gai.conf` on
 glibc-based systems to influence precedence; however, such files alone do not
@@ -338,14 +315,14 @@ Retention, forwarding, filtering, and aggregation of these messages are matters 
 
 Recent-failure state influences address ordering and could temporarily cause
 IPv4 to be preferred over IPv6. Implementations **SHOULD** derive this state from
-connection or service-establishment outcomes observed locally by the host or a
+connection-establishment outcomes observed locally by the host or a
 trusted host networking component, and **SHOULD** resist poisoning of ordering
 decisions from unauthenticated off-path input. The bounded lifetime specified
 in (#connectivity-informed) prevents a transient failure from suppressing the
 normal IPv6 preference indefinitely.
 
 Recent-failure records and aggregated diagnostics can reveal destinations,
-source addresses, services, network attachments, and traffic patterns. Access
+source addresses or prefixes, transport protocols and ports, network attachments and traffic patterns. Access
 to such information **SHOULD** be restricted to authorized entities, and exported
 information **SHOULD** be minimized according to operational need and protected
 according to local security and privacy policy.
