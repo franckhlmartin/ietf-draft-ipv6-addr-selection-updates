@@ -296,12 +296,8 @@ application changes are required.
 
 # Implementation and Deployment Considerations
 
-Implementations that apply these updates inside `getaddrinfo()` [@?POSIX]
-[@?RFC3493] or an equivalent system mechanism preserve compatibility with
-existing applications that use the returned address ordering. For connectivity-informed
-selection, the implementation needs a mechanism to retain recent connection or
-service-establishment failures for later use by destination selection; no new
-application-facing API is required.  One possible implementation is for the host to maintain a Recent IPv6 Failure Table containing the recent-failure records defined in (#connectivity-informed). A component that detects an applicable IPv6 connection or service-establishment failure, such as the TCP stack, a Happy Eyeballs implementation, a QUIC implementation, or a higher-layer service implementation, can report the failure to the mechanism maintaining this table. The RFC 6724 destination-selection implementation can then consult the table for an applicable entry when applying the updated Rule 6. The interface used to report failures and the location and representation of the table are implementation-specific.
+Implementations that apply these updates inside getaddrinfo() or an equivalent system mechanism preserve compatibility with existing applications that iterate the returned address list. For connectivity-informed selection, the implementation needs a mechanism to retain recent connection or service-establishment failures for later use by destination selection. One possible implementation is for the host to maintain a Recent IPv6 Failure Table in memory containing the recent-failure records defined in (#connectivity-informed). A component that detects an applicable IPv6 connection or service-establishment failure, such as the TCP stack, a Happy Eyeballs implementation, a QUIC implementation, or a higher-layer service implementation, can report the failure and the selected IPv6 source address to the mechanism maintaining this table. That mechanism can use the locally configured or learned prefix associated with the source address when available; if no applicable source prefix is known, it retains the complete source address instead. The RFC 6724 destination-selection implementation can then consult the table for an applicable entry when applying the updated Rule 6. The interface used to report failures and the location and representation of the table are implementation-specific; no changes to existing application-facing socket APIs are required.
+
 
 Operators **MAY** use existing policy mechanisms such as `/etc/gai.conf` on
 glibc-based systems to influence precedence; however, such files alone do not
