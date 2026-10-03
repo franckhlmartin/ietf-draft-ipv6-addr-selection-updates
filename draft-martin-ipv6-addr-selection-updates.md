@@ -192,7 +192,7 @@ When this enhancement is enabled, the OS or platform transport connection-establ
 | Failure type | timeout |
 | Timestamp | 2026-09-07T14:32:18+02:00 |
 
-The IPv6 destination field contains the IPv6 destination address selected for the failed attempt. The IPv6 source field SHOULD contain the locally known prefix associated with the IPv6 source address selected for that attempt. If no applicable source prefix is known, the complete IPv6 source address SHOULD be used instead. An implementation MUST NOT infer a prefix length solely from the IPv6 address value.
+The IPv6 destination field contains the IPv6 destination address selected for the failed attempt. The IPv6 source field SHOULD contain the locally known prefix associated with the IPv6 source address selected for that attempt. The associated prefix length can be obtained from the host's interface-address configuration for the selected source address. If no applicable source prefix is known, the complete IPv6 source address SHOULD be used instead. An implementation MUST NOT infer a prefix length solely from the IPv6 address value.
 
 The asymmetry is intentional. A failure may be specific to an individual destination, so the destination is recorded as an address. On the source side, multiple source addresses, including temporary addresses, can belong to the same locally known prefix. Recording the source prefix when available keeps the failure state applicable across such source-address changes without unnecessarily creating separate state for each source address.
 
