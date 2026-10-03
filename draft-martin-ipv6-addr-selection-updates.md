@@ -279,7 +279,7 @@ application changes are required.
 
 # Implementation and Deployment Considerations
 
-Implementations that apply these updates inside getaddrinfo() [@?POSIX] [@?RFC3493] or an equivalent system mechanism preserve compatibility with existing applications that use the returned address ordering. 
+Implementations that apply these updates inside getaddrinfo() [@?POSIX] [@?RFC3493] or an equivalent system mechanism preserve compatibility with existing applications that use the returned address ordering. For connectivity-informed selection, the implementation needs a mechanism to retain recent connection-establishment failures for later use by destination selection; no new application-facing API is required.
 
 Operators **MAY** use existing policy mechanisms such as `/etc/gai.conf` on
 glibc-based systems to influence precedence; however, such files alone do not
