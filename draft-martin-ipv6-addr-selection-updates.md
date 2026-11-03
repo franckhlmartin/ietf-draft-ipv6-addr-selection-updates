@@ -5,7 +5,7 @@ ipr = "trust200902"
 updates = [6724]
 keyword = ["IPv6", "RFC6724", "address selection", "getaddrinfo", "DNS load balancing"]
 
-date = 2026-09-15
+date = 2026-11-02
 
 [seriesInfo]
 name = "Internet-Draft"
@@ -398,21 +398,6 @@ Dual Stack, helped shape the scope.
     </author>
     <date year="2017" month="December"/>
   </front>
-</reference>
-<reference anchor="HAPPY-HEV3" target="https://datatracker.ietf.org/doc/draft-ietf-happy-happyeyeballs-v3/">
-  <front>
-    <title>Happy Eyeballs Version 3: Better Connectivity Using Concurrency</title>
-    <author initials="T." surname="Pauly" fullname="Tommy Pauly">
-    </author>
-    <author initials="D." surname="Schinazi" fullname="David Schinazi">
-    </author>
-    <author initials="N." surname="Jaju" fullname="Nidhi Jaju">
-    </author>
-    <author initials="K." surname="Ishibashi" fullname="Kenichi Ishibashi">
-    </author>
-    <date year="2026" month="July" day="2"/>
-  </front>
-  <seriesInfo name="Internet-Draft" value="draft-ietf-happy-happyeyeballs-v3-04"/>
 </reference>
 <reference anchor="GET-ADDR-PAIRS" target="https://github.com/becarpenter/getapr">
   <front>
