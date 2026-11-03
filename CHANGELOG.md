@@ -5,9 +5,14 @@ Formatting-only edits are omitted unless they affect published semantics.
 
 ## Unreleased
 
-- **Address pairs:** Clarify that pair-based re-ordering **SHOULD** run after
-  all Section 6 destination selection rules of [RFC6724], while still
-  **MUST NOT** override Rules 1, 2, 3, or 8.
+## -01 (2026-11-02)
+
+Prepared for Datatracker submission as
+`draft-martin-ipv6-addr-selection-updates-01`.
+
+- **Revision -01:** Bump Internet-Draft version to
+  `draft-martin-ipv6-addr-selection-updates-01` and document date to
+  2 November 2026; build outputs renamed to match.
 
 - **Related Work / 6man positioning:** Cite
   [draft-ietf-6man-rfc6724-update](https://datatracker.ietf.org/doc/draft-ietf-6man-rfc6724-update/)
@@ -17,8 +22,37 @@ Formatting-only edits are omitted unless they affect published semantics.
   with that draft's Section 9 deferred-gap language; note composability with
   the updated policy table in Implementation and Deployment Considerations.
 
-- **Revision -01:** Bump Internet-Draft version and date for the next Datatracker
-  submission; build outputs renamed to match.
+- **Address pairs:** Replace the TODO placeholder with normative guidance:
+  determine the source address per candidate via an OS-dependent mechanism;
+  allow ordering based on cached prior outcomes and techniques similar to
+  [RFC8305]; cite the end-of-section notes in [RFC6724] Sections 5 and 6.
+  Pair-based re-ordering **SHOULD** run after all Section 6 destination
+  selection rules of [RFC6724], and **MUST NOT** override Rules 1, 2, 3, or 8.
+
+- **Connectivity-informed selection (§3.1) — failure-state implementation:**
+  Require OS/platform transport connection-establishment paths (e.g. `connect()`
+  for TCP and the corresponding QUIC mechanism) to **MUST** create or refresh
+  records in a Recent IPv6 Failure Table (or equivalent). Narrow scope from
+  connection-or-service / higher-layer establishment to
+  connection-establishment failures (timeout, unreachable, refusal, or reset).
+  Place the enhancement in both resolver/`getaddrinfo()` ordering and transport
+  establishment where applicable.
+
+- **Connectivity-informed selection — source prefix:** Record the locally known
+  IPv6 source prefix when available (complete source address as fallback);
+  **MUST NOT** infer a prefix length solely from the address value. Explain the
+  intentional destination-address / source-prefix asymmetry (temporary and other
+  source addresses under one prefix). Matching uses belonging-to-prefix or
+  exact-address rules as appropriate.
+
+- **Connectivity-informed selection — record fields:** Replace the Service field
+  with transport protocol and port; rename destination/source columns for clarity.
+  Remove the Terminology **Service** definition and Happy Eyeballs Version 3
+  service-binding examples. Drop unused informative [HAPPY-HEV3].
+
+- **Abstract / Introduction / Motivation / Security:** Align wording with
+  connection-establishment (not service) failures; security privacy text covers
+  source addresses or prefixes and transport protocols/ports.
 
 ## -00 (2026-09-15)
 
